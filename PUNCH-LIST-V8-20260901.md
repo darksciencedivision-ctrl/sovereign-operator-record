@@ -43,29 +43,37 @@ with no record. "Fits the card" is a reason. Silence is not.
 
 ---
 
-## Builder — ready, cheap, no decisions left in them
+## Builder — ~~ready, cheap, no decisions left in them~~ STRUCK 2026-09-01
 
-| # | Item | Done when |
+| # | Item | Outcome |
 |---|---|---|
-| **B-1** | F-3: generic absolute-path / UNC / user-home pattern in the identifier guard | It catches a build-host path from ANY machine, and does not flag the legitimate `ryguy-pixel/Sovereign-Distillery` provenance in `README.md` / `DECISIONS.md` |
-| **B-2** | F-4 + F-5 deletes: 13 tracked backup files, `control_plane/canonical_registry.py` | Gone; suites green; reference check already done |
+| ~~**B-1**~~ | ~~F-3: generic path pattern in the identifier guard~~ | **DECLINED on measurement** |
+| ~~**B-2**~~ | ~~F-4 + F-5 deletes~~ | **WITHDRAWN — both findings were wrong** |
 
-**B-1 exists because of F-2.** The guard's five patterns are scoped to this operator's own disk —
-`Sslaw`, `Product Software`, `Sov 1`, `C:\Users\…`, `producttion software`. It caught my build-host
-path because my path was one of the five it knows. A path from any other machine walks through,
-which is exactly how 79 files escaped into the distribution.
+Struck after attempting both. Full record:
+`release-worktree/docs/audit/SYSTEM-REVIEW-20260831-ERRATUM-01.md` (`ff82f9a`).
 
-**B-2 is deletes only.** `canonical_registry.py` is 169 lines, 53 models × 18 fields, referenced by
-nothing in the tree and carrying no `__main__`. A model registry nobody reads will be treated as
-authority the first time someone searches "models".
+**B-1 declined.** Three candidate widenings measured against the distribution: 89 files flagged
+(any drive-letter path), 63 (non-system drive), 44 (the operator's other project trees). Nearly all
+legitimate — `C:\Windows`, `C:\Program Files`, the DOCUMENTED install root `C:\SovereignWorkspace`,
+test fixtures. No threshold helps: this workspace documents its own provenance, and the guard's
+disclosed list already carries the category — *"provenance: the path IS the record"*. A guard
+needing 44 exemptions is the wrong guard, which is what F-2 concluded about the `runs` rule.
+F-3 also misread the design: `DeveloperIdentifiersAreBounded` — *bounded* means enumerated.
+
+**B-2 withdrawn, and one half was a plain error.** `canonical_registry.py` has FOUR consumers in
+`shell/tests`; deleting it fails four tests. The finding came from a sweep run inside
+`modules/sow` that never saw `shell/`, reported as a whole-tree claim. The 13 backups are hashed
+by `RELEASE-MANIFEST.json` and declared preserved by its own prose — §10 append-only working as
+written. Deleting all 14 failed 6 tests. Everything measured, then reverted; tree unchanged.
 
 ---
 
-## Builder — needs an envelope before it starts
+## Builder — AUTHORIZED 2026-09-01, was awaiting an envelope
 
 | # | Item | Why it is not on the cheap list |
 |---|---|---|
-| **B-3** | Separate product tests from build-record validators | It is a programme, not a task |
+| **B-3** | Separate product tests from build-record validators | **IN PROGRESS.** Envelope granted by the operator 2026-09-01 ("execute the punch list"). Scoped to the minimum viable version below, not the full separation. |
 
 **The problem, measured.** Extract the shipped archive and run its own suite: **21 failed,
 10 errors, before touching anything.** Causes are structural, not defects —
