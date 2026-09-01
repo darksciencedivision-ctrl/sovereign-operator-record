@@ -73,7 +73,7 @@ written. Deleting all 14 failed 6 tests. Everything measured, then reverted; tre
 
 | # | Item | Why it is not on the cheap list |
 |---|---|---|
-| **B-3** | Separate product tests from build-record validators | **IN PROGRESS.** Envelope granted by the operator 2026-09-01 ("execute the punch list"). Scoped to the minimum viable version below, not the full separation. |
+| **B-3** | Separate product tests from build-record validators | **DONE 2026-09-01** (`ecaee60`). Extraction suite: 21 failed + 10 errors -> 2 failed, 0 errors, 31 correct skips. Both survivors verified as flakes. Minimum viable version only; the full separation is untouched. |
 
 **The problem, measured.** Extract the shipped archive and run its own suite: **21 failed,
 10 errors, before touching anything.** Causes are structural, not defects —
