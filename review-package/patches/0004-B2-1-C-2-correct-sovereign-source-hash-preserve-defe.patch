@@ -1,0 +1,423 @@
+From f1d9304d64221403333df5e1318617b2ea1922d3 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 02:29:05 +0000
+Subject: [PATCH 04/20] B2-1 (C-2): correct sovereign source hash; preserve
+ defective record; add cross-module-hash check
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+modules/sovereign/INSTALL-PROVENANCE.json rewritten with source_sha256 150e518e6d0b15b524ff61cda8fe8eb29aec6bbfb30196f9931908d12ff7ec51 — independently re-hashed this session from D:\\Product Software\\SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip (453,948 B) on operator disk. PACKAGE_MANIFEST.txt and WORKSPACE-RESOLVED-LOCK.txt hashes re-verified in-tree. operator_authorized stays null; integrity_verified now carries a mechanical verification_basis.
+
+The wrong record (Distillery digest 620e8459…, self-attested integrity on a foreign hash) preserved byte-identical as INSTALL-PROVENANCE.previous.json (sha256 ea96af3f…) — classified historical defective record per R2 §8, never rewritten.
+
+New: tools/release/provenance_cross_hash_check.py + module_source_registry.json (explicit enumeration, no globs) — FAILs CROSS/UNKNOWN/MISSING; tests 7/7 OK. Fail-before: sovereign CROSS exit 1; pass-after: sovereign OK exit 0.
+
+Directive SWS-REM-DIR-20260828 R2 BATCH 2 item B2-1. Seat: builder qwen3.8-max. UTC: 2026-08-28T02:29:05+00:00
+---
+ modules/sovereign/INSTALL-PROVENANCE.json     |   9 +-
+ .../INSTALL-PROVENANCE.previous.json          |  28 ++++
+ tools/release/module_source_registry.json     |  40 +++++
+ tools/release/provenance_cross_hash_check.py  | 154 ++++++++++++++++++
+ .../test_provenance_cross_hash_check.py       | 118 ++++++++++++++
+ 5 files changed, 346 insertions(+), 3 deletions(-)
+ create mode 100644 modules/sovereign/INSTALL-PROVENANCE.previous.json
+ create mode 100644 tools/release/module_source_registry.json
+ create mode 100644 tools/release/provenance_cross_hash_check.py
+ create mode 100644 tools/release/test_provenance_cross_hash_check.py
+
+diff --git a/modules/sovereign/INSTALL-PROVENANCE.json b/modules/sovereign/INSTALL-PROVENANCE.json
+index c661993..acaa5fb 100644
+--- a/modules/sovereign/INSTALL-PROVENANCE.json
++++ b/modules/sovereign/INSTALL-PROVENANCE.json
+@@ -2,7 +2,7 @@
+   "module": "sovereign",
+   "source": "D:/Product Software/SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip",
+   "source_kind": "archive",
+-  "source_sha256": "620e8459c74fb5fe9d2dfe0c4693cea02b8346292804d2d2a01fb71cb615be96",
++  "source_sha256": "150e518e6d0b15b524ff61cda8fe8eb29aec6bbfb30196f9931908d12ff7ec51",
+   "source_revision": "SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520",
+   "source_content_manifest_sha256": "d2fa7633e8f98cbf1143fb60a724eb3cfede224c6df318313edb3230de8305da",
+   "lockfiles": [
+@@ -21,8 +21,11 @@
+     ".venv/Scripts/python.exe -m pip freeze > WORKSPACE-RESOLVED-LOCK.txt"
+   ],
+   "integrity_verified": true,
++  "verification_basis": "source_sha256 recomputed 2026-08-28T02:24Z by builder seat qwen3.8-max via Get-FileHash SHA256 over D:\\Product Software\\SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip (453,948 bytes) on operator disk; measured value equals the Punch List v2.1 C-2 'real' hash. PACKAGE_MANIFEST.txt (d2fa7633…) and WORKSPACE-RESOLVED-LOCK.txt (1a850957…) re-hashed in the release worktree and matched.",
+   "source_content_manifest_path": "modules/sovereign/PACKAGE_MANIFEST.txt",
+   "operator_authorization_note": "docs/DECISIONS.md is byte-identical to the VOID builder-authored hash named in REM-01 section 1 and carries no signature block. No operator authorization artifact exists as of updated_utc. Prior value of this field was the string 'DECISIONS.md'.",
+-  "producer": "claude-code REM-01",
+-  "updated_utc": "2026-08-21T04:47:52.7378429Z"
++  "superseded_record": "modules/sovereign/INSTALL-PROVENANCE.previous.json",
++  "correction_note": "C-2 repair (SWS-REM-DIR-20260828 R2, B2-1): the superseded record carried source_sha256 620e8459c74fb5fe9d2dfe0c4693cea02b8346292804d2d2a01fb71cb615be96 — the DISTILLERY source digest — against this SOVEREIGN archive, and self-attested integrity_verified: true on that foreign digest with operator_authorized: null. The wrong record is preserved byte-identical at the superseded path as classified historical defective record (R2 §8); nothing in it is rewritten.",
++  "producer": "builder qwen3.8-max (SWS-REM-DIR-20260828 R2 B2-1); original record producer: claude-code REM-01",
++  "updated_utc": "2026-08-28T02:26:00Z"
+ }
+diff --git a/modules/sovereign/INSTALL-PROVENANCE.previous.json b/modules/sovereign/INSTALL-PROVENANCE.previous.json
+new file mode 100644
+index 0000000..c661993
+--- /dev/null
++++ b/modules/sovereign/INSTALL-PROVENANCE.previous.json
+@@ -0,0 +1,28 @@
++{
++  "module": "sovereign",
++  "source": "D:/Product Software/SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip",
++  "source_kind": "archive",
++  "source_sha256": "620e8459c74fb5fe9d2dfe0c4693cea02b8346292804d2d2a01fb71cb615be96",
++  "source_revision": "SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520",
++  "source_content_manifest_sha256": "d2fa7633e8f98cbf1143fb60a724eb3cfede224c6df318313edb3230de8305da",
++  "lockfiles": [
++    {
++      "path": "WORKSPACE-RESOLVED-LOCK.txt",
++      "sha256": "1a850957d1c19cc936ff89d4f96d151ac910b451b7eaf43d22a87b3ef1ca0b3f"
++    }
++  ],
++  "dependency_lock_status": "WORKSPACE_OWNED_RESOLVED",
++  "operator_authorized": null,
++  "installed_utc": "2026-08-21T02:18:00-05:00",
++  "install_commands_evidence": "evidence/phase2-install.txt",
++  "install_commands": [
++    "py -3.12 -m venv .venv",
++    ".venv/Scripts/python.exe -m pip install -r requirements.txt",
++    ".venv/Scripts/python.exe -m pip freeze > WORKSPACE-RESOLVED-LOCK.txt"
++  ],
++  "integrity_verified": true,
++  "source_content_manifest_path": "modules/sovereign/PACKAGE_MANIFEST.txt",
++  "operator_authorization_note": "docs/DECISIONS.md is byte-identical to the VOID builder-authored hash named in REM-01 section 1 and carries no signature block. No operator authorization artifact exists as of updated_utc. Prior value of this field was the string 'DECISIONS.md'.",
++  "producer": "claude-code REM-01",
++  "updated_utc": "2026-08-21T04:47:52.7378429Z"
++}
+diff --git a/tools/release/module_source_registry.json b/tools/release/module_source_registry.json
+new file mode 100644
+index 0000000..367e543
+--- /dev/null
++++ b/tools/release/module_source_registry.json
+@@ -0,0 +1,40 @@
++{
++  "version": 1,
++  "directive": "SWS-REM-DIR-20260828 R2 / B2-1 (C-2 closure) and B2-2 (C-3)",
++  "policy": "Registry of per-module source identities. Enumeration is explicit (module -> exact provenance path); consumers must never infer paths by glob. A provenance record whose source_sha256 matches the registered hash of a DIFFERENT module is a cross-module-hash defect and must FAIL. 'pending' modules are reported PENDING until their current record is generated (B2-2).",
++  "modules": {
++    "sovereign": {
++      "provenance_path": "modules/sovereign/INSTALL-PROVENANCE.json",
++      "source_sha256": "150e518e6d0b15b524ff61cda8fe8eb29aec6bbfb30196f9931908d12ff7ec51",
++      "source": "D:/Product Software/SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip",
++      "status": "verified",
++      "verified_utc": "2026-08-28T02:24:00Z",
++      "verified_by": "builder qwen3.8-max (Get-FileHash SHA256 of the archive on operator disk; measured value equals the punch-list C-2 'real' hash)"
++    },
++    "distillery": {
++      "provenance_path": "modules/distillery/INSTALL-PROVENANCE.json",
++      "source_sha256": "620e8459c74fb5fe9d2dfe0c4693cea02b8346292804d2d2a01fb71cb615be96",
++      "source": "recorded Distillery source archive (path [U])",
++      "status": "pending",
++      "note": "Punch List v2.1 C-2 [B]: this digest is the Distillery source hash — it is exactly the value found mis-attributed inside sovereign's INSTALL-PROVENANCE.json. Registered here so the cross-module-hash check can detect this defect class; the current distillery record itself is generated in B2-2 (Punch List C-3: no current record exists). Independent re-hash of the Distillery archive remains [U] (archive path not located on this disk)."
++    },
++    "debate": {
++      "provenance_path": "modules/debate/INSTALL-PROVENANCE.json",
++      "source_sha256": null,
++      "status": "pending",
++      "note": "current record to be generated in B2-2 against the candidate's actual contents"
++    },
++    "sow": {
++      "provenance_path": "modules/sow/INSTALL-PROVENANCE.json",
++      "source_sha256": null,
++      "status": "pending",
++      "note": "current record to be generated in B2-2 against the candidate's actual contents"
++    },
++    "tokencenter": {
++      "provenance_path": "modules/tokencenter/INSTALL-PROVENANCE.json",
++      "source_sha256": null,
++      "status": "pending",
++      "note": "current record exists (2026-08-26); source identity to be registered in B2-2"
++    }
++  }
++}
+diff --git a/tools/release/provenance_cross_hash_check.py b/tools/release/provenance_cross_hash_check.py
+new file mode 100644
+index 0000000..ee7979e
+--- /dev/null
++++ b/tools/release/provenance_cross_hash_check.py
+@@ -0,0 +1,154 @@
++#!/usr/bin/env python
++"""Provenance cross-module-hash check — SWS-REM-DIR-20260828 R2, B2-1 (C-2).
++
++Mechanically rejects INSTALL-PROVENANCE records whose ``source_sha256`` is the
++registered source hash of a DIFFERENT module (the C-2 defect class: sovereign
++carrying the Distillery digest), and records whose hash matches no registered
++identity at all.
++
++Enumeration is EXPLICIT: the registry names each module and the exact relative
++path of its current provenance record. No filename globs are used anywhere —
++the manifest/registry is the authority (R2 §4 Batch 2, C-3 design).
++
++Verdicts per module:
++  OK        record present; hash equals the module's own registered hash
++  CROSS     record present; hash equals ANOTHER module's registered hash -> FAIL
++  UNKNOWN   record present; hash matches no registered identity -> FAIL
++  MISSING   registered module has no current record at the named path -> FAIL
++            (before B2-2 generates debate/sow/distillery records, the registry
++            marks those modules 'pending' and they report PENDING instead)
++  PENDING   registry entry carries no source_sha256 yet (not a failure)
++
++Exit codes: 0 = no failures, 1 = at least one CROSS/UNKNOWN/MISSING,
++2 = configuration/usage error.
++"""
++
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import sys
++from datetime import datetime, timezone
++
++
++def load_registry(path: str) -> dict:
++    try:
++        with open(path, "r", encoding="utf-8") as f:
++            doc = json.load(f)
++    except (OSError, ValueError) as exc:
++        raise RegistryError(f"cannot read registry {path}: {exc}") from exc
++    modules = doc.get("modules")
++    if not isinstance(modules, dict) or not modules:
++        raise RegistryError("registry must contain a non-empty 'modules' map")
++    for name, entry in modules.items():
++        if not isinstance(entry, dict) or "provenance_path" not in entry:
++            raise RegistryError(f"module {name!r} must name an exact provenance_path")
++        p = entry["provenance_path"]
++        if any(ch in p for ch in ("*", "?", "[")):
++            raise RegistryError(
++                f"module {name!r} provenance_path {p!r} contains glob characters; "
++                "enumeration must be explicit")
++    return modules
++
++
++class RegistryError(Exception):
++    pass
++
++
++def check(root: str, modules: dict) -> dict:
++    # hash -> owning module(s), for cross-module detection
++    hash_owners: dict[str, list] = {}
++    for name, entry in modules.items():
++        h = entry.get("source_sha256")
++        if h:
++            hash_owners.setdefault(h, []).append(name)
++
++    results = {}
++    for name, entry in modules.items():
++        rel = entry["provenance_path"]
++        registered = entry.get("source_sha256")
++        full = os.path.join(root, rel.replace("/", os.sep))
++
++        if not os.path.isfile(full):
++            if entry.get("status") == "pending" or not registered:
++                results[name] = {"verdict": "PENDING",
++                                 "detail": "no current record; registry entry pending (B2-2)"}
++            else:
++                results[name] = {"verdict": "MISSING",
++                                 "detail": f"registered module lacks {rel}"}
++            continue
++
++        try:
++            with open(full, "r", encoding="utf-8-sig") as f:
++                record = json.load(f)
++        except (OSError, ValueError) as exc:
++            results[name] = {"verdict": "UNKNOWN",
++                             "detail": f"record unreadable: {exc}"}
++            continue
++
++        actual = record.get("source_sha256")
++        results[name] = {"record_path": rel, "record_source_sha256": actual}
++
++        if actual == registered and registered:
++            results[name]["verdict"] = "OK"
++            results[name]["detail"] = "hash equals the module's own registered source hash"
++        elif actual in hash_owners and all(owner != name for owner in hash_owners[actual]):
++            results[name]["verdict"] = "CROSS"
++            results[name]["detail"] = (
++                "source_sha256 belongs to module(s): "
++                + ", ".join(sorted(hash_owners[actual])))
++        elif registered and actual != registered:
++            results[name]["verdict"] = "UNKNOWN"
++            results[name]["detail"] = (
++                f"hash matches no registered identity (expected {registered})")
++        elif not registered:
++            results[name]["verdict"] = "PENDING"
++            results[name]["detail"] = "registry entry carries no source_sha256 yet"
++        else:
++            results[name]["verdict"] = "OK"
++            results[name]["detail"] = "hash equals the module's own registered source hash"
++    return results
++
++
++def main(argv=None) -> int:
++    ap = argparse.ArgumentParser(
++        description="Reject cross-module source hashes in INSTALL-PROVENANCE records.")
++    ap.add_argument("--root", default=".", help="worktree root")
++    ap.add_argument("--registry", required=True, help="module source registry JSON")
++    ap.add_argument("--json", action="store_true", help="emit JSON report")
++    args = ap.parse_args(argv)
++
++    try:
++        modules = load_registry(args.registry)
++    except RegistryError as exc:
++        print(f"provenance_cross_hash_check: CONFIG ERROR: {exc}", file=sys.stderr)
++        return 2
++    if not os.path.isdir(args.root):
++        print(f"provenance_cross_hash_check: no such directory: {args.root}",
++              file=sys.stderr)
++        return 2
++
++    results = check(args.root, modules)
++    failures = {name: r for name, r in results.items()
++                if r["verdict"] in ("CROSS", "UNKNOWN", "MISSING")}
++    report = {
++        "gate": "provenance_cross_hash_check",
++        "directive": "SWS-REM-DIR-20260828 R2 / B2-1 (C-2 closure)",
++        "root": os.path.abspath(args.root),
++        "utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
++        "verdict": "FAIL" if failures else "PASS",
++        "results": results,
++    }
++    if args.json:
++        print(json.dumps(report, indent=2, sort_keys=True))
++    else:
++        print(f"provenance_cross_hash_check: {report['verdict']}")
++        for name in sorted(results):
++            r = results[name]
++            print(f"  {name:<12} {r['verdict']:<8} {r.get('detail', '')}")
++    return 1 if failures else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/release/test_provenance_cross_hash_check.py b/tools/release/test_provenance_cross_hash_check.py
+new file mode 100644
+index 0000000..eb9515f
+--- /dev/null
++++ b/tools/release/test_provenance_cross_hash_check.py
+@@ -0,0 +1,118 @@
++#!/usr/bin/env python
++"""Tests for provenance_cross_hash_check.py (SWS-REM-DIR-20260828 R2 B2-1).
++
++Proves the mechanical rejection of the C-2 defect class: a provenance record
++carrying another module's registered source hash must FAIL (CROSS), an
++unregistered hash must FAIL (UNKNOWN), a missing current record for a
++registered module must FAIL (MISSING), pending modules are PENDING, and a
++correct hash passes. Stdlib-only, offline.
++"""
++
++from __future__ import annotations
++
++import json
++import os
++import shutil
++import sys
++import tempfile
++import unittest
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import provenance_cross_hash_check as phc  # noqa: E402
++
++WORKTREE_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
++REGISTRY = os.path.join(HERE, "module_source_registry.json")
++
++SOV_HASH = "150e518e6d0b15b524ff61cda8fe8eb29aec6bbfb30196f9931908d12ff7ec51"
++DIS_HASH = "620e8459c74fb5fe9d2dfe0c4693cea02b8346292804d2d2a01fb71cb615be96"
++
++
++def make_registry(tmp, entries):
++    path = os.path.join(tmp, "registry.json")
++    with open(path, "w", encoding="utf-8") as f:
++        json.dump({"version": 1, "modules": entries}, f)
++    return path
++
++
++def write_record(tmp, rel, source_sha256):
++    full = os.path.join(tmp, rel.replace("/", os.sep))
++    os.makedirs(os.path.dirname(full), exist_ok=True)
++    with open(full, "w", encoding="utf-8") as f:
++        json.dump({"module": rel.split("/")[1], "source_sha256": source_sha256}, f)
++
++
++class CrossHashTests(unittest.TestCase):
++    def setUp(self):
++        self.tmp = tempfile.mkdtemp(prefix="phc-test-")
++        self.addCleanup(shutil.rmtree, self.tmp, True)
++
++    def _two_module_registry(self):
++        return make_registry(self.tmp, {
++            "alpha": {"provenance_path": "modules/alpha/INSTALL-PROVENANCE.json",
++                      "source_sha256": SOV_HASH, "status": "verified"},
++            "beta": {"provenance_path": "modules/beta/INSTALL-PROVENANCE.json",
++                     "source_sha256": DIS_HASH, "status": "verified"},
++        })
++
++    def test_cross_module_hash_rejected(self):
++        """The C-2 defect class: alpha carrying beta's hash must FAIL."""
++        reg = self._two_module_registry()
++        write_record(self.tmp, "modules/alpha/INSTALL-PROVENANCE.json", DIS_HASH)
++        write_record(self.tmp, "modules/beta/INSTALL-PROVENANCE.json", DIS_HASH)
++        res = phc.check(self.tmp, phc.load_registry(reg))
++        self.assertEqual(res["alpha"]["verdict"], "CROSS", res)
++        self.assertIn("beta", res["alpha"]["detail"])
++        self.assertEqual(res["beta"]["verdict"], "OK")
++
++    def test_own_hash_passes(self):
++        reg = self._two_module_registry()
++        write_record(self.tmp, "modules/alpha/INSTALL-PROVENANCE.json", SOV_HASH)
++        write_record(self.tmp, "modules/beta/INSTALL-PROVENANCE.json", DIS_HASH)
++        res = phc.check(self.tmp, phc.load_registry(reg))
++        self.assertEqual(res["alpha"]["verdict"], "OK", res)
++        self.assertEqual(res["beta"]["verdict"], "OK", res)
++
++    def test_unknown_hash_rejected(self):
++        reg = self._two_module_registry()
++        write_record(self.tmp, "modules/alpha/INSTALL-PROVENANCE.json", "f" * 64)
++        res = phc.check(self.tmp, phc.load_registry(reg))
++        self.assertEqual(res["alpha"]["verdict"], "UNKNOWN", res)
++
++    def test_missing_registered_record_fails(self):
++        reg = self._two_module_registry()
++        write_record(self.tmp, "modules/beta/INSTALL-PROVENANCE.json", DIS_HASH)
++        res = phc.check(self.tmp, phc.load_registry(reg))
++        self.assertEqual(res["alpha"]["verdict"], "MISSING", res)
++
++    def test_pending_module_reported_pending_not_failed(self):
++        reg = make_registry(self.tmp, {
++            "gamma": {"provenance_path": "modules/gamma/INSTALL-PROVENANCE.json",
++                      "source_sha256": None, "status": "pending"},
++        })
++        res = phc.check(self.tmp, phc.load_registry(reg))
++        self.assertEqual(res["gamma"]["verdict"], "PENDING", res)
++
++    def test_glob_paths_rejected_in_registry(self):
++        reg = make_registry(self.tmp, {
++            "x": {"provenance_path": "modules/*/INSTALL-PROVENANCE.json",
++                  "source_sha256": SOV_HASH},
++        })
++        with self.assertRaises(phc.RegistryError):
++            phc.load_registry(reg)
++
++
++class WorktreeC2Tests(unittest.TestCase):
++    """Against the REAL registry: after B2-1, sovereign must be OK."""
++
++    def test_sovereign_record_matches_own_registered_hash(self):
++        if not os.path.isdir(os.path.join(WORKTREE_ROOT, "modules")):
++            self.skipTest("worktree not present")
++        modules = phc.load_registry(REGISTRY)
++        res = phc.check(WORKTREE_ROOT, modules)
++        self.assertEqual(res["sovereign"]["verdict"], "OK", res["sovereign"])
++        self.assertNotEqual(res["sovereign"]["verdict"], "CROSS")
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
+-- 
+2.34.1
+

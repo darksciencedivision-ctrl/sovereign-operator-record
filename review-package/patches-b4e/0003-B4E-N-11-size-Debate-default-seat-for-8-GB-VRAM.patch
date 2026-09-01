@@ -1,0 +1,51 @@
+From 70c0ed9e6e8757421e23671a0e1503cdb181e124 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 11:34:20 -0500
+Subject: [PATCH 3/9] B4E N-11: size Debate default seat for 8 GB VRAM
+
+---
+ modules/debate/MANIFEST-SHA256.json | 6 +++---
+ modules/debate/config.json          | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/modules/debate/MANIFEST-SHA256.json b/modules/debate/MANIFEST-SHA256.json
+index e693992..5ad5910 100644
+--- a/modules/debate/MANIFEST-SHA256.json
++++ b/modules/debate/MANIFEST-SHA256.json
+@@ -19,7 +19,7 @@
+     {
+       "path": "config.json",
+       "size": 1712,
+-      "sha256": "3953618d6d8739ce038a8ec4b72d995a20a898b979d673e475259e6b46b81a84"
++      "sha256": "59f2f4d8462e70af38bb4d230c0202277362e8028891b086c70db1401847d898"
+     },
+     {
+       "path": "debate/__init__.py",
+@@ -188,8 +188,8 @@
+     },
+     {
+       "path": "tests/test_v1_2_1_config_integrity.py",
+-      "size": 5265,
+-      "sha256": "b95022288b6cab0850477da9acfd767e6a46d2611a0162b5d001a1b93968eb36"
++      "size": 5262,
++      "sha256": "4b8e6e0ff5cf05322f912ed019535e19cac3dab894ab9c34c54d31d63d83e8dc"
+     },
+     {
+       "path": "tests/test_v1_2_1_config_policy.py",
+diff --git a/modules/debate/config.json b/modules/debate/config.json
+index 4668bfe..7837d23 100644
+--- a/modules/debate/config.json
++++ b/modules/debate/config.json
+@@ -4,7 +4,7 @@
+   "seats": [
+     {
+       "name": "Neo",
+-      "model": "phi4:14b",
++      "model": "qwen3:8b",
+       "persona": "The Builder. Constructive, systematic, stoic with dry humor. You build frameworks and defend them under fire, but you concede clean hits.",
+       "color": "#4fd1ff",
+       "thesis": "When freedom and safety conflict, restriction is an admission of design failure: build the system that dissolves the tradeoff instead of rationing liberty. I hold that almost every apparent hard choice is a structural problem not yet solved."
+-- 
+2.34.1
+

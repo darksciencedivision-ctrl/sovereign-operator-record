@@ -1,0 +1,46 @@
+From f3d14f2a04b4f604b0577a1c733d75618ba2353e Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 11:38:52 -0500
+Subject: [PATCH 5/9] B4E P-D5: annotate superseded Debate version claims
+
+---
+ BUILD-DIRECTIVE-SWS-UI-001.md | 2 +-
+ docs/ADR-003.md               | 1 +
+ docs/DISCOVERY.md             | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/BUILD-DIRECTIVE-SWS-UI-001.md b/BUILD-DIRECTIVE-SWS-UI-001.md
+index d88cb38..6e30b1d 100644
+--- a/BUILD-DIRECTIVE-SWS-UI-001.md
++++ b/BUILD-DIRECTIVE-SWS-UI-001.md
+@@ -76,7 +76,7 @@ Build a **single, hardened, local-only workspace shell** that gives the operator
+ | Module | Artifact | Live tree |
+ |---|---|---|
+ | SOVEREIGN 3.1.2 | `SOVEREIGN_ENTERPRISE_PRODUCTION_20260813_142520.zip` | Unknown — **operator to state in DECISIONS.md** |
+-| Debate Table v1.2 P1 | `Debate_Table_v1.2_Phase1_Production_20260811_201116 - Copy.zip` | Unknown — **operator to state** |
++| Debate Table v1.2.1-hardening | `Debate_Table_v1.2.1_Hardening_20260823_143520.zip` | sha256 d03ba417914e1465898f5144cc5735afb92f7f6da5e846e0a968fe48c531d265 — VERIFIED |
+ | SOW | `SOW_CONTINUATION_BASELINE_20260815_210626.candidate.zip` + `SOW_REVIEW_ROUND2_RAW\` | `D:\multi model terminal app\sovereign-orchestration-workspace` (HEAD `bad029e7`) |
+ | Sovereign Distillery | `SOVEREIGN_DISTILLERY_ENTERPRISE_20260821T011825Z_5ff6f56e.zip` + folder | `D:\Sovereign Distillery\` — **no product runtime** |
+ 
+diff --git a/docs/ADR-003.md b/docs/ADR-003.md
+index 3fb309a..79f2228 100644
+--- a/docs/ADR-003.md
++++ b/docs/ADR-003.md
+@@ -1,3 +1,4 @@
++> Historical record of the v1.2-P1 era (annotated 2026-08-28 per OD-22): Debate is v1.2.1-hardening as of RELEASE-MANIFEST.json; original text preserved below.
+ # ADR-003 — Debate Table identity fingerprint
+ 
+ **Date:** 2026-08-21
+diff --git a/docs/DISCOVERY.md b/docs/DISCOVERY.md
+index 5fb121b..019068e 100644
+--- a/docs/DISCOVERY.md
++++ b/docs/DISCOVERY.md
+@@ -1,3 +1,4 @@
++> Historical record of the v1.2-P1 era (annotated 2026-08-28 per OD-22): Debate is v1.2.1-hardening as of RELEASE-MANIFEST.json; original text preserved below.
+ # DISCOVERY.md — SWS-UI-001 v1.2 Phase 1
+ # captured: 2026-08-20T21:55:00-05:00
+ # by: DeepSeek V4 Pro (builder)
+-- 
+2.34.1
+

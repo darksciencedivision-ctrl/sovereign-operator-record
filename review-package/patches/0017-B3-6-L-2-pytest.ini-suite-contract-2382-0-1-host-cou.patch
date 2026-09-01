@@ -1,0 +1,37 @@
+From 613811d9a0b1420d0ddcbed4bccfabfe8bbb7268 Mon Sep 17 00:00:00 2001
+From: "builder grok-4.6 (opencode harness, SWS-REM-DIR-20260828)"
+ <builder.grok@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 00:04:56 -0500
+Subject: [PATCH 17/20] B3-6 (L-2): pytest.ini suite contract 2382/0/1
+ host-coupled
+
+---
+ modules/sow/pytest.ini | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/modules/sow/pytest.ini b/modules/sow/pytest.ini
+index 3bf2378..962bace 100644
+--- a/modules/sow/pytest.ini
++++ b/modules/sow/pytest.ini
+@@ -5,10 +5,14 @@ markers =
+     live_cli: deliberately invokes a live provider CLI and may spend provider quota
+     phase19_focused: Phase 19 remediation and gate-focused Python subset
+     host_coupled: result can depend on host load or installed host tooling; run without competing suites
+-# Derived from the direct 2026-08-14 host run:
+-# 2381 passed / 1 failed / 1 skipped in 638.34s with --durations=20. 800s is
+-# 161.66s (25.3%) headroom for host variance; the original inherited 600s
+-# candidate ceiling failed at 18% and was never a measured whole-suite bound.
++# Measured contract (U339 corrected wrapper + 2026-08-16 independent host review):
++# 2382 passed / 0 failed / 1 skipped. HOST-COUPLED: timing and skip depend on
++# installed host tooling and load; the skip is
++# tests/unit/test_run_frontier_providers_ps1.py (SOW_PROVIDER_HOST_CHECK=1).
++# 800s is 161.66s (25.3%) headroom over the 638.34s direct measurement.
++# The previous 2381/1/1 comment was the pre-fix stale count.
++# Original inherited 600s candidate ceiling failed at 18% and was never a
++# measured whole-suite bound.
+ phase19_suite_timeout_seconds = 800
+ phase19_focused_paths =
+     tests/unit/test_collaboration_policy_delegation.py
+-- 
+2.34.1
+

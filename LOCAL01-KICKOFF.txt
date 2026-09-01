@@ -1,0 +1,47 @@
+LOCAL-01 KICKOFF — builder seat claude-code (opus-5)
+
+Report which shell your Bash tool runs. If it is not PowerShell, run cmdlets via
+powershell.exe -NoProfile -Command.
+
+Read from disk, in order:
+  1. release-planning\CLAUDE-LOCAL-01-DIRECTIVE-R2-20260830.md — your directive; execute the block
+     between ---BEGIN PASTE--- and ---END PASTE---
+  2. release-planning\PUNCH-LIST-V5-20260830.md
+  3. release-planning\VALIDATOR-AUDIT-FIXUP01-SEAL-20260830.md
+  4. release-planning\bundles\FIXUP01\D\DIAGNOSIS.md — the standard for Phase D method
+  5. release-planning\OPERATOR-INSTRUCTIONS.log — ENTRIES 001 through 017; 016 and 017 govern
+
+Envelope precedence: SWS-REM-DIR-20260828-CANDIDATE-R2.md, LOOP-PROTOCOL-20260828.md,
+CLAUDE-LOCAL-01-DIRECTIVE-R2-20260830.md, OPERATOR-INSTRUCTIONS.log. release-worktree\AGENTS.md is the
+SUPERSEDED SWS-UI-001 envelope — take only its seat model (ENTRY 011).
+
+Verify before executing:
+  CLAUDE-LOCAL-01-DIRECTIVE-R2-20260830.md
+    b94b47f2267cc36c9620fd9bb6c27b417608e3e720550d78727873b50e0105f9
+  SWS-REM-DIR-20260828-CANDIDATE-R2.md
+    9061c2e8a40bcff4258f77692ff0e23ffebde98eaa638446a22a7aa914b3691d
+  LOOP-PROTOCOL-20260828.md
+    acae8fb8b9b4d673f28ae5b6d4b74fbfed0c86e0e70bfa1f86638237219bae44
+Hash mismatch: write release-planning\bundles\LOCAL01\BOOT-FAILURE.md and stop. Any other boot
+obstruction is reported in-session with no BOOT-FAILURE.md. NOTE: porcelain is expected to carry one
+untracked file, modules/sow/docs/evidence/receipts/SHELL-LIVE-READY.json — that is N-29, and fixing
+it is your item F-6.
+
+OPERATOR INSTRUCTION: LOCAL-01 is authorized as a run-to-convergence loop. Do not stop between items
+and do not ask me questions — park per E-1..E-6 and continue. The objective is not a green suite: it
+is a session where I can pick a local model and talk to it. LOCAL MODELS ONLY — I have declined
+frontier authorization for now, live_operation.json stays absent, and you must not create, stub or
+route around it. HARD CEILING: no model above 8 billion parameters may be used, selected, defaulted
+to or pulled; use the 8B model for the tests. Pull nothing. You may start the Ollama daemon — it is
+local and costs nothing. The Conductor seat is AGNOSTIC - it must offer the local library, not just frontier. A
+frontier-only conductor defeats the purpose of the system, so if it is frontier-only today that is a
+DEFECT you correct in this run, never a finding you park. It is ruled option C: it launches, takes
+my typing, offers local models, and spawns nothing until I pick one and send something. You produce CANDIDATE work only; you never
+write "status: PASS" and you never promote.
+
+Phase D is not a formality. Its predecessor refuted four validator findings by measuring instead of
+accepting them, and one of those findings was a wrong self-attribution. Reproduce everything from
+bytes and from the running product. If you refute something, report it and do not fix it.
+
+Exit when the section 7 checklist has no blank row, then stop. End with:
+BUILDER CLAIM: no gate submitted for reviewer evaluation; no PASS asserted.

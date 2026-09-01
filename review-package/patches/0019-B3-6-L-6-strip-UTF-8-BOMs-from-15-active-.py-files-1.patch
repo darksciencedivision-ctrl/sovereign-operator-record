@@ -1,0 +1,178 @@
+From 22f8328749b24bc035d2ed9f381f9715d5071d79 Mon Sep 17 00:00:00 2001
+From: "builder grok-4.6 (opencode harness, SWS-REM-DIR-20260828)"
+ <builder.grok@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 00:06:37 -0500
+Subject: [PATCH 19/20] B3-6 (L-6): strip UTF-8 BOMs from 15 active .py files
+ (14 sovereign + 1 debate test)
+
+---
+ modules/debate/tests/test_v1_2_1_config_integrity.py | 2 +-
+ modules/sovereign/clu/clu_loop.py                    | 2 +-
+ modules/sovereign/cycle_runner_v3.py                 | 2 +-
+ modules/sovereign/document_assembler.py              | 2 +-
+ modules/sovereign/embedding_client.py                | 2 +-
+ modules/sovereign/evaluation/contract.py             | 2 +-
+ modules/sovereign/evaluation/contract_trace.py       | 2 +-
+ modules/sovereign/evaluation/integrity.py            | 2 +-
+ modules/sovereign/publication_gate.py                | 2 +-
+ modules/sovereign/quality_gate.py                    | 2 +-
+ modules/sovereign/semantic_claim_matching.py         | 2 +-
+ modules/sovereign/synthesis/praxis_report.py         | 2 +-
+ modules/sovereign/synthesis/sovereign_voice.py       | 2 +-
+ modules/sovereign/synthesis/synth_king.py            | 2 +-
+ modules/sovereign/system_manifest.py                 | 2 +-
+ 15 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/modules/debate/tests/test_v1_2_1_config_integrity.py b/modules/debate/tests/test_v1_2_1_config_integrity.py
+index ac8da1d..a4295ec 100644
+--- a/modules/debate/tests/test_v1_2_1_config_integrity.py
++++ b/modules/debate/tests/test_v1_2_1_config_integrity.py
+@@ -1,4 +1,4 @@
+-﻿"""v1.2.1 hardening regression tests: configuration integrity (P0-02, P0-03).
++"""v1.2.1 hardening regression tests: configuration integrity (P0-02, P0-03).
+ 
+ Contract:
+ - Malformed JSON config must be rejected, never replaced by defaults, and the
+diff --git a/modules/sovereign/clu/clu_loop.py b/modules/sovereign/clu/clu_loop.py
+index badbeaf..92509e8 100644
+--- a/modules/sovereign/clu/clu_loop.py
++++ b/modules/sovereign/clu/clu_loop.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import argparse
+ import json
+diff --git a/modules/sovereign/cycle_runner_v3.py b/modules/sovereign/cycle_runner_v3.py
+index 06134db..012d733 100644
+--- a/modules/sovereign/cycle_runner_v3.py
++++ b/modules/sovereign/cycle_runner_v3.py
+@@ -1,4 +1,4 @@
+-﻿#!/usr/bin/env python3
++#!/usr/bin/env python3
+ from __future__ import annotations
+ 
+ import argparse
+diff --git a/modules/sovereign/document_assembler.py b/modules/sovereign/document_assembler.py
+index 20e5388..c18bf8e 100644
+--- a/modules/sovereign/document_assembler.py
++++ b/modules/sovereign/document_assembler.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ r"""
+ document_assembler.py - SOVEREIGN Phase 9
+diff --git a/modules/sovereign/embedding_client.py b/modules/sovereign/embedding_client.py
+index 7e0ccb9..5e80812 100644
+--- a/modules/sovereign/embedding_client.py
++++ b/modules/sovereign/embedding_client.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import json
+ import math
+diff --git a/modules/sovereign/evaluation/contract.py b/modules/sovereign/evaluation/contract.py
+index 19f2177..1f018ba 100644
+--- a/modules/sovereign/evaluation/contract.py
++++ b/modules/sovereign/evaluation/contract.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import inspect
+ import logging
+diff --git a/modules/sovereign/evaluation/contract_trace.py b/modules/sovereign/evaluation/contract_trace.py
+index 163a7c4..2d5d2a6 100644
+--- a/modules/sovereign/evaluation/contract_trace.py
++++ b/modules/sovereign/evaluation/contract_trace.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import json
+ import os
+diff --git a/modules/sovereign/evaluation/integrity.py b/modules/sovereign/evaluation/integrity.py
+index daf38e7..bd18324 100644
+--- a/modules/sovereign/evaluation/integrity.py
++++ b/modules/sovereign/evaluation/integrity.py
+@@ -1,4 +1,4 @@
+-﻿"""Runtime integrity enforcement for protected SOVEREIGN paths and state files."""
++"""Runtime integrity enforcement for protected SOVEREIGN paths and state files."""
+ 
+ from __future__ import annotations
+ 
+diff --git a/modules/sovereign/publication_gate.py b/modules/sovereign/publication_gate.py
+index a107605..bf98266 100644
+--- a/modules/sovereign/publication_gate.py
++++ b/modules/sovereign/publication_gate.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ r"""
+ publication_gate.py - SOVEREIGN Phase 9
+diff --git a/modules/sovereign/quality_gate.py b/modules/sovereign/quality_gate.py
+index d57cf53..ed1d071 100644
+--- a/modules/sovereign/quality_gate.py
++++ b/modules/sovereign/quality_gate.py
+@@ -1,4 +1,4 @@
+-﻿#!/usr/bin/env python3
++#!/usr/bin/env python3
+ # -*- coding: utf-8 -*-
+ 
+ """
+diff --git a/modules/sovereign/semantic_claim_matching.py b/modules/sovereign/semantic_claim_matching.py
+index d4af89c..921ccc1 100644
+--- a/modules/sovereign/semantic_claim_matching.py
++++ b/modules/sovereign/semantic_claim_matching.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ from difflib import SequenceMatcher
+ from pathlib import Path
+diff --git a/modules/sovereign/synthesis/praxis_report.py b/modules/sovereign/synthesis/praxis_report.py
+index f54c308..5104aa4 100644
+--- a/modules/sovereign/synthesis/praxis_report.py
++++ b/modules/sovereign/synthesis/praxis_report.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import argparse
+ import json
+diff --git a/modules/sovereign/synthesis/sovereign_voice.py b/modules/sovereign/synthesis/sovereign_voice.py
+index 03eae9d..a0d7218 100644
+--- a/modules/sovereign/synthesis/sovereign_voice.py
++++ b/modules/sovereign/synthesis/sovereign_voice.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import argparse
+ import json
+diff --git a/modules/sovereign/synthesis/synth_king.py b/modules/sovereign/synthesis/synth_king.py
+index 2315a70..eb536c6 100644
+--- a/modules/sovereign/synthesis/synth_king.py
++++ b/modules/sovereign/synthesis/synth_king.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import argparse
+ import json
+diff --git a/modules/sovereign/system_manifest.py b/modules/sovereign/system_manifest.py
+index f2ace47..4001c99 100644
+--- a/modules/sovereign/system_manifest.py
++++ b/modules/sovereign/system_manifest.py
+@@ -1,4 +1,4 @@
+-﻿from __future__ import annotations
++from __future__ import annotations
+ 
+ import json
+ import ipaddress
+-- 
+2.34.1
+

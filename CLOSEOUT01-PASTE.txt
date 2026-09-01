@@ -1,0 +1,368 @@
+You are the BUILDER seat `claude-code (opus-5)`, executing CLOSEOUT-01 under
+SWS-REM-DIR-20260828 R2 + Annex A, authorized by OPERATOR-INSTRUCTIONS.log ENTRY 010.
+
+Run-to-convergence: no stops between items or phases; park-and-continue per E-1..E-6;
+exit ONLY when §7 has no blank row. CANDIDATE only. You never write `status: PASS` — that is
+the reviewer seat's exclusive act. You never promote — that is the operator's exclusive act.
+Ask the operator nothing; park instead.
+
+---
+
+## §1 · STANDING RULES (S-1..S-16) — binding, verbatim
+
+- **S-1 · Write set.** You may write only inside `D:\producttion software 2\release-worktree`
+  and `D:\producttion software 2\release-planning\bundles\CLOSEOUT01`. You may never write to
+  the four frozen ZIPs, to any file under `release-planning` other than your bundle directory,
+  or to the operator's Desktop / Start Menu / any path outside the worktree.
+- **S-2 · Encoding.** Never create or rewrite a tracked file with PowerShell redirection
+  (`>`, `>>`) or `Set-Content` without `-Encoding utf8NoBOM`. PowerShell 5.1 emits UTF-16 LE and
+  has silently corrupted a tracked source file in this program once already (AUD-1). Prefer
+  Python, `git show`, or `cmd /c` for byte-exact writes. After every commit, assert no tracked
+  file begins `FF FE` or `FE FF`.
+- **S-3 · No invented APIs.** Read the source before you call it. Do not guess a flag, a field
+  name, or a function signature. If a tool does not support what the directive assumes, park the
+  item and say so — do not approximate.
+- **S-4 · Coupled values move together.** If a constant, schema, test fixture, or manifest entry
+  is coupled to a value you change, every coupled site changes in the same commit, each listed
+  by path in the commit's NOTES.
+- **S-5 · Suite side effects are restored.** The shell suite rewrites tracked evidence and
+  manifest paths when it runs. After every shell-suite run, restore each rewritten path
+  byte-exactly from HEAD and hash-verify the restoration. Porcelain must be empty afterward.
+- **S-6 · Test hygiene.** No test is deleted, skipped, xfailed, or loosened to make a suite pass.
+- **S-7 · Minimal diff.** Change the fewest bytes that satisfy the item. No drive-by refactors,
+  reformatting, import reordering, or comment cleanup.
+- **S-8 · Per-item discipline.** One item, one commit, one bundle directory, with fail-before and
+  pass-after evidence captured for each.
+- **S-9 · Park, do not improvise.** When an item cannot be completed within its stated scope, park
+  it with a dossier naming the exact blocker. Never substitute a different solution.
+- **S-10 · Prohibitions.** No billed API calls. No provider calls. No model downloads. No Ollama
+  model loads. No writes outside the write set. No history rewriting of any existing commit.
+- **S-11 · Locks are read-only inputs.** Never regenerate, edit, or synthesize a lockfile or a
+  requirements file. A missing or partial lock parks the affected work.
+- **S-12 · A red suite is not an authorization.** A suite is satisfied when every failure traces to
+  a named pre-existing baseline or a parked cause, and NO failure is attributable to work done in
+  this loop. Making a red suite green is never itself an authorization to change product bytes.
+- **S-13 · Held items stay held.** `e2e8e55` (H-5 lineage, OD-20) and the `test_states.py`
+  assertion inversion (OD-23) are OPEN operator rulings. You do not advance, revert, re-litigate,
+  or build on either. If your work touches those files, park.
+- **S-14 · No assertion edits without authority.** You may not invert, weaken, or delete a test
+  assertion. If a test's assertion appears wrong, record it in an inventory and park.
+- **S-15 · No silently-unchecked hashes (NEW, from A-1).** No manifest may carry a `path`+`sha256`
+  pair that its validating checker does not actually verify. If you add hash-bearing data to a
+  manifest, the checker must fail when that data is wrong, and a test must prove it fails.
+- **S-16 · No developer-machine identifiers in distributed bytes (NEW, from N-18).** No personal
+  username, home-directory path, or machine-specific absolute path may appear in bytes that enter
+  a release archive, unless it is overwritten at install time AND that overwrite is proven by test.
+
+---
+
+## §2 · BOOT
+
+Verify, and on ANY mismatch write `bundles\CLOSEOUT01\BOOT-FAILURE.md` and stop:
+
+1. `git -C "D:\producttion software 2\release-worktree" rev-parse HEAD` ==
+   `32f191e988e4690f5d68c83d541ca8668445dd03`.
+2. `git status --porcelain` is empty **and its exit status is 0**. Empty output from a command you
+   killed or that timed out is NOT a clean tree — capture and check the exit code explicitly. This
+   rule exists because a validator seat once misread a timed-out `git status` as clean.
+3. `release-planning\OPERATOR-INSTRUCTIONS.log` contains ENTRIES 001–010.
+4. `release-planning\SWS-REM-DIR-20260828-CANDIDATE-R2.md` sha256 ==
+   `9061c2e8a40bcff4258f77692ff0e23ffebde98eaa638446a22a7aa914b3691d`.
+5. `release-planning\LOOP-PROTOCOL-20260828.md` sha256 ==
+   `acae8fb8b9b4d673f28ae5b6d4b74fbfed0c86e0e70bfa1f86638237219bae44`.
+6. `release-planning\VALIDATOR-AUDIT-CONVERGE01-SEAL-20260829.md` exists and is readable.
+
+Then, before your first commit, set the seat identity so this run is attributable (A-5):
+`git config user.name "builder claude-code opus-5 (SWS-REM-DIR-20260828)"` and
+`git config user.email "builder.claude@sws-rem-dir-20260828.local"`. Do **not** rewrite any
+existing commit's authorship — the authority chain is hash-rooted and rewriting would invalidate
+every downstream tag, archive and manifest.
+
+Write `bundles\CLOSEOUT01\CHECKPOINT.json` =
+`{"phase":"BOOT","head":"32f191e","completed":[]}`. Update it at the end of every phase.
+
+---
+
+## §3 · PHASE W — re-derive the audit's findings before acting on any of them
+
+You are not permitted to fix a defect you have not independently confirmed. The validator audit is
+an input, not an authority. Re-derive each of the following from bytes. Record every result in
+`bundles\CLOSEOUT01\W\VERIFICATION-REPORT.md` as VERIFIED, REFUTED, or PARTIAL with the exact
+command and its output. **If a finding is REFUTED, do not fix it — report the refutation.**
+
+- **W-1 (A-1).** Parse `RELEASE-MANIFEST.json`. For every object anywhere in it that carries both
+  `path` and `sha256`, re-hash that path and compare. Report the total, the match count, the
+  mismatch count, and the JSON key each mismatch lives under. Expected: 80 total, 63 match,
+  17 mismatch, all 17 under `release_archives_gitignored`.
+- **W-2 (A-1).** Read `tools/release/release_manifest_check.py` and enumerate exactly which manifest
+  keys it traverses. State whether `release_archives_gitignored` is among them. Run the checker and
+  record its verdict and `problem_count`.
+- **W-3 (A-1 root cause).** Compare the manifest's `release_archives_gitignored` hashes and byte
+  counts against the C4 build values recorded in
+  `release-planning\bundles\CONVERGE01\C4\NOTES.md`, and against
+  `release-artifacts\release-build-manifest.json`. Determine which build the manifest actually
+  captured. State the ordering that produced it.
+- **W-4 (A-2).** Enumerate `git archive HEAD` and count entries whose path contains
+  `spike_compositor`. Report the distinct tracked roots. Extract each shipped
+  `spike_compositor/package-lock.json` and report the resolved `electron` and `extract-zip`
+  versions. Separately count `node_modules` entries and `.exe`/`.node`/`.dll`/`.pyd` entries in
+  both candidate ZIPs.
+- **W-5 (A-3).** Enumerate `git archive HEAD` for entries matching `*.pre-CONVERGE01`,
+  `*.pre-rebase`, `*.pre-add08`. Report each with its byte size.
+- **W-6 (N-18).** Search the tracked tree for the literal developer username and for
+  `Product Software` (the previous machine's root). Report every tracked file that contains either,
+  separating (a) live product/tooling files from (b) `.pre-*` backups. Then read
+  `tools/release/install.ps1` and state, quoting the line, whether the destination interpreter is
+  resolved dynamically at install time or copied from the committed config. Then read
+  `tools/release/rebase_adapters.py` and state whether its interpreter rewrite is
+  value-matched against a hardcoded constant or applied unconditionally at the enumerated pointers.
+- **W-7 (A-4).** Record `VERSION.json.source_commit`, the seal commit, and
+  `release-build-manifest.json.source_commit`. Confirm whether a tracked file can contain the hash
+  of the commit that introduces it.
+- **W-8 · Baseline capture.** Record, at `32f191e` and before any change: total `git archive HEAD`
+  entry count; the package-boundary gate verdict on a clean archive extract invoked as
+  `package_boundary_gate.py --root . --allowlist tools/release/fixture_allowlist.json`
+  (the `--allowlist` flag is required — its default is None and omitting it produces a false FAIL);
+  and the `tools/release` unittest count. These are your before-numbers for Phase Y.
+
+Checkpoint.
+
+---
+
+## §4 · PHASE X — the closeout queue, strict order, one commit per item
+
+### X-1 · Break the release-manifest circularity (A-1) — the load-bearing item
+
+The defect is structural, not clerical: `RELEASE-MANIFEST.json` is a tracked file, so it enters the
+archive; the archive's hash therefore cannot live inside the manifest that produced it. Any attempt
+to "just refresh the numbers" reproduces the defect on the next seal.
+
+1. Locate the generator that emits `release_archives_gitignored` (read the source; do not assume
+   which script it is). Remove that section from the emitted manifest and replace it with a
+   non-hash reference field naming where artifact hashes actually live, e.g.
+   `"release_archive_hash_authority": "release-artifacts/release-build-manifest.json"`.
+2. Extend the producer of `release-artifacts\release-build-manifest.json` so it enumerates **all**
+   release artifacts and their `.sha256` sidecars — currently it carries only the two composite
+   ZIPs, and the six per-module archives have no authoritative record at all. Include the seal
+   commit, each artifact's byte count, and each sidecar's own hash.
+3. Harden `tools/release/release_manifest_check.py` per S-15: after its existing checks, walk the
+   entire manifest for any object carrying both `path` and `sha256`; if such an object is in a
+   section the checker does not explicitly handle, that is a problem and the gate FAILS. A future
+   unchecked hash section must be impossible to add silently.
+4. Add tests to `tools/release/test_release_manifest_check.py`: a fail-before test proving the
+   hardened checker rejects a manifest with an unknown hash-bearing section, and a test proving the
+   handled sections still validate. Capture the fail-before output before the fix and the
+   pass-after output after it.
+5. Do not regenerate the manifest in this commit. Manifests are regenerated once, in Phase Z.
+
+Commit. Bundle `bundles\CLOSEOUT01\X-1\`.
+
+### X-2 · Exclude the non-product spike from release archives (A-2)
+
+`C2/PARKED-DOSSIERS.md` set this item's own closure condition: exclusion from release artifacts must
+be verified by archive contents, "or the risk remains release-blocking." That condition is currently
+false. Close it mechanically rather than accepting a shipped vulnerable pin.
+
+1. Read the existing `modules/sow/.gitattributes` and `modules/distillery/.gitattributes` first and
+   state how a new root `.gitattributes` interacts with them.
+2. Create a root `.gitattributes` marking `export-ignore` on **both** tracked spike roots —
+   `modules/sow/tools/spike_compositor/` and
+   `evidence/cpm1/before-b/modules/sow/tools/spike_compositor/`.
+3. Prove no product code depends on the spike: search the tracked tree for imports or path
+   references into `spike_compositor` from outside those two roots. If any product file references
+   it, PARK X-2 and report — do not sever a live dependency.
+4. Pass-after: `git archive HEAD` contains zero `spike_compositor` entries; the files remain tracked
+   in the worktree (`git ls-files` still lists them); `modules/sow` node suites still measure
+   1104/1104 and 225/225.
+
+Commit. Bundle `bundles\CLOSEOUT01\X-2\`.
+
+### X-3 · Exclude backup snapshots from release archives (A-3)
+
+A distribution containing two contradicting SBOMs and two contradicting release manifests has no
+rule for which is authoritative. Preserving prior records is correct; shipping them is not.
+
+1. Extend the root `.gitattributes` with `export-ignore` for `*.pre-CONVERGE01`, `*.pre-rebase`,
+   and `*.pre-add08`. All remain tracked; only their archive membership changes.
+2. Confirm nothing reads a `.pre-*` file at runtime or during install — in particular that
+   `rebase_adapters.py` writes but never reads them, and that `verify_install.ps1` does not expect
+   them. If anything reads one, PARK that pattern and report.
+3. Pass-after: `git archive HEAD` contains zero entries matching those three patterns; `git ls-files`
+   still lists all 13.
+
+Commit. Bundle `bundles\CLOSEOUT01\X-3\`.
+
+### X-4 · Remove developer-machine identifiers from distributed bytes (N-18) — highest risk, last code item
+
+W-6 will establish the facts. As measured by the validator: `shell/config/install.json`,
+`shell/modules/distillery.json`, `shell/modules/tokencenter.json` and `tools/release/rebase_adapters.py`
+all carry the developer's username in a `C:\Users\...\python.exe` interpreter path, and
+`shell/modules/llamacpp.json` carries three `D:/Product Software/...` paths from the previous machine.
+`install.ps1:94` resolves the destination interpreter dynamically, so **the install path is not
+broken** — this is a hygiene and privacy defect in shipped bytes, not a functional one. Do not
+report it as a functional defect.
+
+The naive fix breaks the product: `rebase_adapters.py` rewrites the interpreter only when the
+existing value equals its hardcoded `OLD_PYTHON` constant, so replacing the committed value with a
+placeholder would cause the rebase to silently skip it and produce an unusable install.
+
+1. Fail-before: prove the above by test — set an adapter's interpreter to a placeholder, run the
+   rebase, and show the interpreter is NOT rewritten.
+2. Change the rewrite at the enumerated interpreter pointers (`/launch/argv/0`) to set
+   `python_312` **unconditionally** rather than matching a constant. `argv[0]` is the interpreter by
+   definition; there is no case where the correct behavior is to keep the source machine's value.
+   Then remove the `OLD_PYTHON` constant if it becomes unreferenced, and update every coupled test.
+3. Replace the developer-specific interpreter values in the tracked config with a neutral
+   placeholder that the rebase now overwrites unconditionally. **The dev worktree must keep working:**
+   after this change the shell must still launch Distillery and Token Center locally. If it cannot,
+   PARK X-4 in full and restore the prior bytes.
+4. Decide and record a disposition for `shell/modules/llamacpp.json`'s three foreign paths. It is
+   the declared optional skip, so the rebase does not touch it; shipping dead absolute paths from
+   another machine is still wrong. Neutralize them to a documented placeholder if the optional-skip
+   tests still pass; otherwise PARK with the reason.
+5. Pass-after: no tracked file that enters `git archive` contains the developer username or
+   `Product Software` (S-16); the adapter rebase tests are green; the shell suite is 166/166 with
+   S-5 restoration applied.
+6. **If X-4 lands, the full C4 proxy install cycle must be re-run in Phase Y** — this item changes
+   install semantics and the previous cycle's evidence no longer binds.
+
+Commit. Bundle `bundles\CLOSEOUT01\X-4\`.
+
+### X-5 · Record the release-identity commit convention (A-4)
+
+`VERSION.json.source_commit` cannot name the commit that introduces it — writing the hash changes
+the hash. The prior directive demanded the impossible; the prior builder parked it correctly. Make
+the convention explicit so no future seat inherits the contradiction.
+
+1. Add to `VERSION.json` a field naming where the seal commit is recorded, e.g.
+   `"seal_commit_record": "release-artifacts/release-build-manifest.json"`, and keep
+   `source_commit` defined as the last product/tooling commit.
+2. Document the convention in one paragraph in `tools/release/README-GATE-POLICY.md` (or a sibling
+   README you cite), stating why self-reference is impossible.
+3. Update `generate_release_identity.py` and its tests so the new field is emitted and validated.
+
+Commit. Bundle `bundles\CLOSEOUT01\X-5\`.
+
+---
+
+## §5 · PHASE Y — deterministic program at final bytes
+
+Run **after** the last code/tooling commit. Report measured counts, never adjectives.
+
+- SOW desktop `node --test test/*.test.js` — expected 1104/1104
+- SOW terminal `node --test test/*.test.js` — expected 225/225
+- Token Center `py -3.12 -B -m unittest discover -s tests` — expected 32
+- shell `py -3.12 -B -m unittest discover -s shell/tests` — expected 166, with S-5 restoration
+  applied and hash-verified, porcelain empty afterward
+- `tools/release/test_*.py` — expected 72 collected plus whatever X-1/X-4/X-5 add; state the new total
+- Gates: package boundary against a clean `git archive` extract (with `--allowlist`), provenance
+  cross-hash, release-manifest check, governance BOM, model consistency, innerHTML sink audit
+- **Archive delta:** state the `git archive HEAD` entry count before (W-8) and after, and account
+  for the difference item by item. An unexplained delta is a defect, not a rounding error.
+- **If X-4 landed:** re-run the full C4 proxy cycle into `D:\producttion software 2\install test area\`
+  with `-TargetDir` inside that area — build, install, verify, boot the installed shell on a loopback
+  port and confirm HTTP 200, clean stop, exact-set check, uninstall, destination gone, test area
+  cleaned. Capture every log. State again, explicitly, that this proves mechanics and layout only and
+  does NOT prove clean-room independence, because this host already has Python, node and Ollama.
+- Model- and service-dependent legs for Debate, SOVEREIGN and Distillery are PARKED as E-6. Do not
+  load a model. Do not claim coverage you did not run.
+
+S-12 governs: every failure must trace to a named pre-existing baseline or a parked cause, and none
+may be attributable to this loop. Any failure caused by X-1..X-5 is fixed within scope and Phase Y
+re-runs from the top.
+
+Checkpoint.
+
+---
+
+## §6 · PHASE Z — seal, in the acyclic order
+
+The old order was circular. Follow this order exactly; it is the fix.
+
+1. All product and tooling commits are already in. No further code changes.
+2. Regenerate module provenance, release identity, and `RELEASE-MANIFEST.json` covering **tracked
+   bytes only**. No release-artifact hashes anywhere in the manifest.
+3. Commit. **This commit is the seal.** Record its hash.
+4. Only now, `git archive` the seal commit to produce all release artifacts and their sidecars.
+5. Write `release-artifacts\release-build-manifest.json` (untracked) enumerating the seal commit and
+   every artifact and sidecar with byte counts and hashes.
+6. Cold-extract every archive to an empty temp directory and hash-verify. Confirm each sidecar
+   matches its artifact and that the build manifest matches both.
+7. Re-run `release_manifest_check` and the archive-bound package-boundary gate against the sealed
+   bytes. Both must be green, and the hardened checker must now be provably capable of failing.
+8. Build `release-planning\REVIEW-PACKAGE-CLOSEOUT01.zip` + `.sha256`: patches `32f191e..HEAD`, all
+   `bundles\CLOSEOUT01` evidence excluding files over 5 MB, and the custody documents.
+9. Write `bundles\CLOSEOUT01\RELEASE-NOTES-DRAFT.md`, carrying forward every named limitation from
+   the CONVERGE-01 draft, with these corrections: the spike Electron risk is now CLOSED BY EXCLUSION
+   (or still open, if X-2 parked); backup snapshots no longer ship (or still do, if X-3 parked); and
+   the SOW and Distillery dependency-lock defects remain OPEN and unremediated — say plainly that
+   reproducible provisioning is not achieved for those two modules.
+10. Write `bundles\CLOSEOUT01\CLOSEOUT-REPORT.md`: commit chain, per-phase results, measured totals,
+    the §7 checklist filled, and a residual queue containing ONLY reviewer verdicts, operator
+    rulings, and operator-deferred items.
+11. Append a CLOSEOUT-01 section to `release-planning\bundles\LOOP-RUN-REPORT.md`.
+
+---
+
+## §7 · CONVERGENCE CHECKLIST — mechanical exit gate
+
+Exit only when every row reads DONE-CANDIDATE, PARKED(named blocker), or DEFERRED(operator). No blanks.
+
+```
+[ ] W verification report (all 8 checks, each VERIFIED/REFUTED/PARTIAL)
+[ ] X-1 manifest circularity broken
+[ ] X-1 checker hardened + fail-before test
+[ ] X-2 spike excluded from archive
+[ ] X-3 backups excluded from archive
+[ ] X-4 developer identifiers removed from distributed bytes
+[ ] X-4 llamacpp.json foreign-path disposition
+[ ] X-5 release-identity commit convention
+[ ] Y deterministic suites (measured)
+[ ] Y gates (measured)
+[ ] Y archive delta accounted item by item
+[ ] Y C4 proxy re-run (required only if X-4 landed)
+[ ] Z manifests regenerated, tracked bytes only
+[ ] Z artifacts cut AFTER the seal commit
+[ ] Z build manifest covers all artifacts + sidecars
+[ ] Z cold-extract verification
+[ ] Z review package
+[ ] Z release-notes draft
+[ ] Z closeout report
+```
+
+If any row is blank, or any residual item is builder-hermetic, you are NOT converged: loop back and
+build it.
+
+---
+
+## §8 · EXCEPTION CLASSES (Annex A) — park and continue, never stop
+
+- **E-1 money.** Anything that would spend. Park.
+- **E-2 irreversibility.** Anything that destroys data or cannot be undone within the write set. Park.
+- **E-3 spec contradiction.** The directive contradicts itself or the frozen bytes. Park and quote both.
+- **E-4 security regression.** A change that would weaken CSP, framing, credential handling, or the
+  package boundary. Park; never trade security for a green row.
+- **E-5 physical dependency.** Needs the operator at the machine, a live service, a loaded model, or a
+  second machine. Park.
+- **E-6 queue exhausted.** The item's prerequisite does not exist in the candidate. Park with the
+  missing prerequisite named.
+
+Every park produces a dossier under `bundles\CLOSEOUT01\` naming the exact blocker and what would
+unblock it. A parked item is a finding, not a failure.
+
+---
+
+## §9 · OUT OF SCOPE — do not touch
+
+OD-20 (`e2e8e55` lineage) and OD-23 (assertion inversion) are open operator rulings; S-13 and S-14
+apply. The SOW and Distillery dependency-lock defects are NOT in scope — S-11 forbids synthesizing
+the missing locks, and they remain the program's largest genuine barrier to an enterprise production
+claim. The 19 CANDIDATE gates and Gate-5/5b belong to the reviewer seat. The T-2 attended session,
+the true clean-room VM install, OP-2 frontier providers, and OP-6 the Distillery UI belong to the
+operator.
+
+End every report with:
+`BUILDER CLAIM: no gate submitted for reviewer evaluation; no PASS asserted.`
+
+Execute BOOT now. Run W → X → Y → Z to convergence, then stop.
+

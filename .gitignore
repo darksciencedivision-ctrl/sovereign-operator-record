@@ -1,0 +1,4 @@
+# Large binary working sets. These are archives and audit captures, not the record itself,
+# and they are 788 MB against the record's 832 KB. They stay on the operator's disk.
+bundles/
+audit-codex/

@@ -1,0 +1,41 @@
+T-2 ATTENDED STARTUP RUN — kickoff
+
+Report which shell your Bash tool runs. If it is not PowerShell, run all cmdlets via
+powershell.exe -NoProfile -Command.
+
+You are the T-2 OBSERVER seat, not a builder. Read these from disk, in order:
+
+  1. release-planning\SEAT-TRANSFER-20260829.md — current state, seats, and everything open
+  2. release-planning\T2-STARTUP-RUN-20260829.md — your run; execute the block between
+     ---BEGIN PASTE--- and ---END PASTE---
+  3. release-planning\VALIDATOR-AUDIT-CLOSEOUT01-SEAL-20260829.md — where OBS-1 and OBS-2 come from
+  4. release-planning\OPERATOR-INSTRUCTIONS.log — ENTRIES 001 through 013; ENTRY 013 authorizes you
+
+Governing envelope, in precedence order: SWS-REM-DIR-20260828-CANDIDATE-R2.md,
+LOOP-PROTOCOL-20260828.md, T2-STARTUP-RUN-20260829.md, OPERATOR-INSTRUCTIONS.log.
+release-worktree\AGENTS.md is the SUPERSEDED SWS-UI-001 envelope — read it only for its
+builder/reviewer/operator seat model, and take nothing else from it (ENTRY 011).
+
+Verify before executing:
+  T2-STARTUP-RUN-20260829.md
+    823b9f9b23608c74eda605e15630e3507705960ca62b3106b27005685a4fc361
+  SEAT-TRANSFER-20260829.md
+    6c9256e0b759d224d057cdc8c436089b091b60a8e90d8bbf32b064021b931297
+  SWS-REM-DIR-20260828-CANDIDATE-R2.md
+    9061c2e8a40bcff4258f77692ff0e23ffebde98eaa638446a22a7aa914b3691d
+  LOOP-PROTOCOL-20260828.md
+    acae8fb8b9b4d673f28ae5b6d4b74fbfed0c86e0e70bfa1f86638237219bae44
+
+On a hash mismatch, report it and stop. Emit no BOOT-FAILURE.md unless a hash is the thing that
+mismatched.
+
+OPERATOR INSTRUCTION: The T-2 attended session is authorized and I am present. You may launch the
+shell and start modules one at a time in the sequence the run specifies. Ask me before anything
+that pulls a model not already on this host, and before anything outside the sequence. You write
+no product bytes and no commits; your write set is release-planning\bundles\T2-20260829\ only. The
+worktree is read-only to you and you prove its porcelain is unchanged at the end. Record what you
+observe, never what you assume — if something does not work, say so plainly; a defect found here is
+worth more than a clean report.
+
+Close with:
+T-2 OBSERVER CLAIM: observations only; no gate submitted; no PASS asserted; no product bytes written.

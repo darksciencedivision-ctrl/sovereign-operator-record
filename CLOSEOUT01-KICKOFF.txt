@@ -1,0 +1,88 @@
+CLOSEOUT-01 KICKOFF — builder seat claude-code (opus-5) — REVISION 2
+
+This file supersedes revision 1, which contained a validator error: it told you to
+confirm "AGENTS.md from this project root is loaded." That instruction was wrong twice
+over and is WITHDRAWN. Read the ENVELOPE section below instead. Your predecessor seat
+halted correctly on revision 1; that halt is recorded as sound.
+
+Before anything else, report which shell your Bash tool runs. If it is not PowerShell,
+run all cmdlets via powershell.exe -NoProfile -Command.
+
+== PROJECT ROOT ==
+
+Your project root is D:\producttion software 2 and it is correct as-is. Do not re-root
+to the worktree. The write set for this run deliberately spans two sibling directories:
+release-worktree\ (the release candidate) and release-planning\bundles\CLOSEOUT01\
+(your evidence bundle). Rooting at the worktree would put your bundle directory outside
+your root.
+
+== ENVELOPE — read this carefully, it is a correction ==
+
+There are TWO governance documents on this disk belonging to TWO different programs. Do
+not conflate them.
+
+SUPERSEDED, for context only: release-worktree\AGENTS.md and its byte-identical copy
+release-worktree\CLAUDE.md (sha256 80c0d4a18cc1fa0c6c3fbab4feab80c6a86b756755d22096ad
+30ae38ed2c8fc5) are the SWS-UI-001 v1.2 builder envelope. They are rooted at
+"D:\Product Software\Production Workspace\", a path that no longer exists, and their
+precedence chain names BUILD-DIRECTIVE-SWS-UI-001.md as the contract and
+release-worktree\evidence\OPERATOR-INSTRUCTIONS.log as the authorization artifact.
+NEITHER governs this run. In THIS program, SWS-UI-001 v1.2 is a release SUBJECT — one
+of the module identities being sealed — not the contract. Read AGENTS.md once for its
+builder/reviewer/operator seat model, which SWS-REM-DIR-20260828 R2 section 1 adopts and
+which is unchanged. Take nothing else from it. Specifically: do NOT treat
+BUILD-DIRECTIVE-SWS-UI-001.md as your contract, and do NOT write to or read authority
+from release-worktree\evidence\OPERATOR-INSTRUCTIONS.log — that log is the superseded
+SWS-UI-001-era record.
+
+GOVERNING for CLOSEOUT-01, in precedence order:
+  1. release-planning\SWS-REM-DIR-20260828-CANDIDATE-R2.md — the governing directive
+  2. release-planning\LOOP-PROTOCOL-20260828.md — Annex A, the loop protocol
+  3. release-planning\CLAUDE-CLOSEOUT-01-DIRECTIVE-20260829.md — your work directive
+  4. release-planning\OPERATOR-INSTRUCTIONS.log — the authorization record of this
+     program. ENTRY 010 authorizes you; ENTRY 011 records the ruling that produced this
+     revision. Read ENTRIES 001 through 011 in full.
+
+Also read, as the input you must independently re-derive in Phase W:
+  release-planning\VALIDATOR-AUDIT-CONVERGE01-SEAL-20260829.md
+
+== HASH VERIFICATION — before you execute anything ==
+
+  CLAUDE-CLOSEOUT-01-DIRECTIVE-20260829.md
+    67753c3480a1cfe49d2fd28c934cb5e2954a1491ea90d6e79ef6a0fd781537c5
+  VALIDATOR-AUDIT-CONVERGE01-SEAL-20260829.md
+    96eb272255f34c3c208f97712bdd86b81be5c9ab77e0dff0045d2d0cebb7ccff
+  SWS-REM-DIR-20260828-CANDIDATE-R2.md
+    9061c2e8a40bcff4258f77692ff0e23ffebde98eaa638446a22a7aa914b3691d
+  LOOP-PROTOCOL-20260828.md
+    acae8fb8b9b4d673f28ae5b6d4b74fbfed0c86e0e70bfa1f86638237219bae44
+
+On any hash mismatch, write release-planning\bundles\CLOSEOUT01\BOOT-FAILURE.md naming
+the file, the expected hash and the measured hash, and stop. On any OTHER boot
+obstruction, halt and report in the session as your predecessor did — do not emit
+BOOT-FAILURE.md, which is specified for hash mismatch only. That distinction was drawn
+correctly by the prior seat and is now standing practice.
+
+== EXECUTE ==
+
+Execute, in full, the block between ---BEGIN PASTE--- and ---END PASTE--- in
+CLAUDE-CLOSEOUT-01-DIRECTIVE-20260829.md. Begin with its BOOT section, then run PHASE W,
+PHASE X, PHASE Y and PHASE Z to convergence.
+
+OPERATOR INSTRUCTION: CLOSEOUT-01 is authorized as a run-to-convergence loop. Do not stop
+between items or phases and do not ask the operator questions — park per exception classes
+E-1 through E-6 and continue. All stage pauses are waived. Long-running helpers run
+detached. OD-24, OD-25 and OD-26 are ruled as recorded in ENTRY 010. OD-20 and OD-23 remain
+OPEN operator rulings: standing rules S-13 and S-14 forbid you from advancing, reverting,
+or building on either. You produce CANDIDATE work only — you never write "status: PASS"
+and you never promote.
+
+Phase W is not a formality. The validator audit is an input to you, not an authority over
+you. Re-derive every one of its findings from bytes yourself. If you refute one, report
+the refutation and do not fix it. The validator has now been wrong twice in this program
+and was corrected by builder seats both times.
+
+Exit when the section 7 convergence checklist has no blank row, then stop. End your final
+report with this exact line:
+
+BUILDER CLAIM: no gate submitted for reviewer evaluation; no PASS asserted.

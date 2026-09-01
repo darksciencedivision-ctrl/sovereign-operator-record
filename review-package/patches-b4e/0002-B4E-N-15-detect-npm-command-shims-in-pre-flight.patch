@@ -1,0 +1,108 @@
+From ae6e1c1f42cbc1bfc0556a9c656f4198e9966693 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 11:30:44 -0500
+Subject: [PATCH 2/9] B4E N-15: detect npm command shims in pre-flight
+
+---
+ shell/BUILD-MANIFEST.txt  |  2 +-
+ shell/src/probe.py        | 19 +++++++++++++++++++
+ shell/tests/test_probe.py | 30 ++++++++++++++++++++++++++++++
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+ create mode 100644 shell/tests/test_probe.py
+
+diff --git a/shell/BUILD-MANIFEST.txt b/shell/BUILD-MANIFEST.txt
+index 3fe9241..00c1d53 100644
+--- a/shell/BUILD-MANIFEST.txt
++++ b/shell/BUILD-MANIFEST.txt
+@@ -17,7 +17,7 @@ f3277e290ba67fb096000b56e06d0fd83aaab8b305dd9db0c81aa8fa9cdb0f1d  src/adapter.py
+ 9e429da65564b9ab95f7976a4be9641136d96f179ddcfa7c6bd1872bf4f4acb9  src/csrf.py
+ 150fb324d492ff65828ac83f9147c97b883981949bd94552036ad51ba61b97b8  src/distillery.py
+ 2a4eac622c6eb61edb7653be324c7d2b199b35de518c4d08d8facc8bbbf2673a  src/logring.py
+-f0df2775936f8bb3583304cadefa9d83b295ff932d47d13dcfe6f9327d7f0643  src/probe.py
++40923a1881a247a86d648047eaa8d830740aacc5cfd7d261c9943f023f826bf6  src/probe.py
+ b200f17871bbd03f9d2c69928396286f4a57705188fdce1041f24754d55c0ea6  src/redact.py
+ 6eeb30e3f76fbdff3097ca857b4f21482b67f88b74b1285a4d8c0f6fba80f478  src/server.py
+ dfae2514e4972c93028b61c8a554f3b91a2f94f86b5fe124b2048309ea8006d6  src/startup_test.py
+diff --git a/shell/src/probe.py b/shell/src/probe.py
+index 85b6650..10375cb 100644
+--- a/shell/src/probe.py
++++ b/shell/src/probe.py
+@@ -3,12 +3,23 @@ SWS Probes — readiness, identity, pre-flight.
+ """
+ import json
+ import os
++from pathlib import Path
++import shutil
+ import socket
+ import subprocess
+ import time
+ import urllib.request
+ import urllib.error
+ 
++try:
++    from modules.sow.adapters.cmd_shim import assert_cmd_shim_argv_safe
++except ImportError:  # direct execution: repository root not on sys.path
++    import importlib.util as _ilu
++    _spec = _ilu.spec_from_file_location(
++        "cmd_shim", Path(__file__).resolve().parents[2] / "modules/sow/adapters/cmd_shim.py")
++    _mod = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_mod)
++    assert_cmd_shim_argv_safe = _mod.assert_cmd_shim_argv_safe
++
+ 
+ def http_probe(url: str, expect_status: int, timeout_s: int, poll_ms: int) -> tuple[bool, float, str]:
+     """Poll an HTTP endpoint until it returns expect_status or timeout."""
+@@ -126,6 +137,14 @@ def preflight_toolchain() -> dict:
+                         ("node", ["node", "--version"]),
+                         ("npm", ["npm", "--version"])]:
+         try:
++            if name == "npm":
++                resolved = shutil.which("npm")
++                if not resolved:
++                    raise FileNotFoundError("npm not found on PATH")
++                args = [resolved, "--version"]
++                if resolved.lower().endswith((".cmd", ".bat")):
++                    assert_cmd_shim_argv_safe(args)
++                    args = ["cmd.exe", "/d", "/c", *args]
+             r = subprocess.run(args, capture_output=True, text=True, timeout=10)
+             results[name] = {"present": True, "version": r.stdout.strip()}
+         except Exception as e:
+diff --git a/shell/tests/test_probe.py b/shell/tests/test_probe.py
+new file mode 100644
+index 0000000..a64683f
+--- /dev/null
++++ b/shell/tests/test_probe.py
+@@ -0,0 +1,30 @@
++"""N-15 regressions for Windows npm command-shim pre-flight detection."""
++from __future__ import annotations
++
++import os
++from pathlib import Path
++import tempfile
++from unittest import mock
++
++from shell.src.probe import preflight_toolchain
++
++
++def test_preflight_detects_npm_cmd_on_path() -> None:
++    with tempfile.TemporaryDirectory() as raw_temp:
++        npm = Path(raw_temp) / "npm.cmd"
++        npm.write_bytes(b"@echo off\r\necho 11.22.33\r\n")
++        path = raw_temp + os.pathsep + os.environ.get("PATH", "")
++        with mock.patch.dict(os.environ, {"PATH": path}):
++            result = preflight_toolchain()["npm"]
++
++    assert result == {"present": True, "version": "11.22.33"}
++
++
++def test_preflight_refuses_hostile_resolved_npm_path() -> None:
++    hostile = r"C:\unsafe&dir\npm.cmd"
++    with mock.patch("shell.src.probe.shutil.which", return_value=hostile):
++        result = preflight_toolchain()["npm"]
++
++    assert result["present"] is False
++    assert "refusing .cmd-shim argv[0]" in result["error"]
++    assert repr(hostile) in result["error"]
+-- 
+2.34.1
+

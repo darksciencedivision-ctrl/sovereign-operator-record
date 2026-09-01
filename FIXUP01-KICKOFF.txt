@@ -1,0 +1,52 @@
+FIXUP-01 KICKOFF — builder seat claude-code (opus-5)
+
+Report which shell your Bash tool runs. If it is not PowerShell, run all cmdlets via
+powershell.exe -NoProfile -Command.
+
+You are the BUILDER seat. Read these from disk, in order:
+
+  1. release-planning\CLAUDE-FIXUP-01-DIRECTIVE-20260830.md — your directive. Execute the block
+     between ---BEGIN PASTE--- and ---END PASTE---
+  2. release-planning\PUNCH-LIST-V5-20260830.md — the current state of everything
+  3. release-planning\bundles\T2-20260829\VALIDATOR-LIVE-OBSERVATIONS-01.md — the live findings you
+     must independently reproduce in Phase D
+  4. release-planning\OPERATOR-INSTRUCTIONS.log — ENTRIES 001 through 014; ENTRY 014 authorizes you
+
+Governing envelope, in precedence order: SWS-REM-DIR-20260828-CANDIDATE-R2.md,
+LOOP-PROTOCOL-20260828.md, CLAUDE-FIXUP-01-DIRECTIVE-20260830.md, OPERATOR-INSTRUCTIONS.log.
+release-worktree\AGENTS.md is the SUPERSEDED SWS-UI-001 envelope — read it only for its
+builder/reviewer/operator seat model and take nothing else from it (ENTRY 011).
+
+Verify before executing:
+  CLAUDE-FIXUP-01-DIRECTIVE-20260830.md
+    4ef3dcd8d0db66efafee976676ababbab3be2936ff7c34b282f8e08f1c422d7a
+  PUNCH-LIST-V5-20260830.md
+    b232ae4793ae70015ab0d3bb0a2f340d26eafabdc76e5e7e8c92ab58663a650b
+  SWS-REM-DIR-20260828-CANDIDATE-R2.md
+    9061c2e8a40bcff4258f77692ff0e23ffebde98eaa638446a22a7aa914b3691d
+  LOOP-PROTOCOL-20260828.md
+    acae8fb8b9b4d673f28ae5b6d4b74fbfed0c86e0e70bfa1f86638237219bae44
+
+On a hash mismatch write release-planning\bundles\FIXUP01\BOOT-FAILURE.md and stop. Any other boot
+obstruction is reported in-session with no BOOT-FAILURE.md.
+
+OPERATOR INSTRUCTION: FIXUP-01 is authorized as a run-to-convergence loop. Do not stop between
+items or phases and do not ask me questions — park per E-1 through E-6 and continue. All stage
+pauses are waived; long-running helpers run detached. You may start the shell and modules locally
+to diagnose and to demonstrate fixes; you may NOT load a model, spend anything, or touch either
+fail-closed interlock (standing rule S-18 — the absent live_operation.json, and the H-10 Conductor
+quota guard). Those are my rulings OD-31 and OD-32 and they stay closed in this run. You produce
+CANDIDATE work only; you never write "status: PASS" and you never promote.
+
+Phase D is not a formality. The validator's observations are an input, not an authority — it has
+been corrected by builder seats five times in this program and it authored two of the defects you
+are fixing. Reproduce every finding from bytes yourself. If you refute one, report the refutation
+and do not fix it.
+
+Standing rule S-17 is the point of this run: five defects reached me through completely green test
+suites. A fix is not done when its test passes; it is done when the running product behaves. Where
+you cannot drive the UI yourself, write a precise LIVE-VERIFICATION REQUEST saying exactly what
+must be observed — the validator has a browser on this host and will confirm it.
+
+Exit when the section 7 checklist has no blank row, then stop. End your final report with:
+BUILDER CLAIM: no gate submitted for reviewer evaluation; no PASS asserted.

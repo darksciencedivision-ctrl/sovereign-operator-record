@@ -1,0 +1,268 @@
+From 5a529462d4d626c4d201be00f4de84245913a3e9 Mon Sep 17 00:00:00 2001
+From: "builder grok-4.6 (opencode harness, SWS-REM-DIR-20260828)"
+ <builder.grok@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 00:09:41 -0500
+Subject: [PATCH 20/20] B3-6 (L-1): refuse cmd.exe metacharacters on .cmd-shim
+ argv
+
+---
+ modules/sow/adapters/cmd_shim.py              | 35 +++++++++
+ .../sow/adapters/coding/opencode/harness.py   |  3 +
+ modules/sow/adapters/frontier/antigravity.py  |  1 +
+ modules/sow/adapters/frontier/claude_code.py  |  2 +
+ modules/sow/adapters/frontier/codex.py        |  2 +
+ modules/sow/adapters/frontier/grok_build.py   |  1 +
+ modules/sow/adapters/frontier/process_tree.py |  3 +
+ .../adapters/frontier/provider_cli_common.py  |  2 +
+ .../unit/test_cmd_shim_metacharacters.py      | 71 +++++++++++++++++++
+ 9 files changed, 120 insertions(+)
+ create mode 100644 modules/sow/adapters/cmd_shim.py
+ create mode 100644 modules/sow/tests/unit/test_cmd_shim_metacharacters.py
+
+diff --git a/modules/sow/adapters/cmd_shim.py b/modules/sow/adapters/cmd_shim.py
+new file mode 100644
+index 0000000..0aae073
+--- /dev/null
++++ b/modules/sow/adapters/cmd_shim.py
+@@ -0,0 +1,35 @@
++"""N-03 / L-1 — refuse cmd.exe metacharacters on a .cmd-shim argv.
++
++Windows npm shims are `*.cmd`. CreateProcess + cmd.exe re-parse the argument
++vector; Python `list2cmdline` quoting does not stop `& | ^ < > %` from
++executing (INDEPENDENT_REVIEW_WINDOWS_HOST_20260816 N-03). Validate every
++argv element, including the executable path, before a .cmd shim is spawned.
++"""
++from __future__ import annotations
++
++from collections.abc import Sequence
++
++CMD_SHIM_METACHARS = frozenset("&|^<>%")
++
++
++class CmdShimMetacharacter(ValueError):
++    """An argv destined for a .cmd shim carried a cmd.exe metacharacter."""
++
++
++def is_cmd_shim(path: str) -> bool:
++    return str(path).lower().endswith(".cmd")
++
++
++def assert_cmd_shim_argv_safe(argv: Sequence[str]) -> None:
++    if not argv:
++        return
++    if not is_cmd_shim(str(argv[0])):
++        return
++    for index, raw in enumerate(argv):
++        arg = str(raw)
++        hits = "".join(ch for ch in CMD_SHIM_METACHARS if ch in arg)
++        if hits:
++            raise CmdShimMetacharacter(
++                "refusing .cmd-shim argv[%d] carrying cmd.exe metacharacters %r: %r"
++                % (index, hits, arg)
++            )
+diff --git a/modules/sow/adapters/coding/opencode/harness.py b/modules/sow/adapters/coding/opencode/harness.py
+index bf5c92d..14de769 100644
+--- a/modules/sow/adapters/coding/opencode/harness.py
++++ b/modules/sow/adapters/coding/opencode/harness.py
+@@ -45,6 +45,8 @@ from dataclasses import dataclass
+ from typing import Protocol, runtime_checkable
+ from urllib.parse import urlparse
+ 
++from adapters.cmd_shim import assert_cmd_shim_argv_safe
++
+ # The harness id — must equal the roster `harness` / capability `harness_class` value so a
+ # coding_tui task can only match a node that really drives OpenCode (Phase 6 F1).
+ OPENCODE_HARNESS = "opencode"
+@@ -146,6 +148,7 @@ def _opencode_run_argv(executable: str, prompt: str, *, model: str, workdir: str
+     if workdir:
+         argv += ["--dir", str(workdir)]
+     argv += ["-m", model, "--format", "json", prompt]
++    assert_cmd_shim_argv_safe(argv)
+     return argv
+ 
+ 
+diff --git a/modules/sow/adapters/frontier/antigravity.py b/modules/sow/adapters/frontier/antigravity.py
+index 918d265..2c437c9 100644
+--- a/modules/sow/adapters/frontier/antigravity.py
++++ b/modules/sow/adapters/frontier/antigravity.py
+@@ -144,6 +144,7 @@ def build_interactive_antigravity_command(executable: str, *, model: str | None
+         argv += [ANTIGRAVITY_ADD_DIR_FLAG, ws]
+     C.assert_no_forbidden_provider_args(argv)
+     C.assert_no_untrusted_instruction_args(argv)
++    C.assert_cmd_shim_argv_safe(argv)
+     return argv
+ 
+ 
+diff --git a/modules/sow/adapters/frontier/claude_code.py b/modules/sow/adapters/frontier/claude_code.py
+index f1c81bc..aab1ab4 100644
+--- a/modules/sow/adapters/frontier/claude_code.py
++++ b/modules/sow/adapters/frontier/claude_code.py
+@@ -40,6 +40,7 @@ from typing import Any
+ 
+ from adapters.base.backend import Backend, BackendAuthPause, ConductorBackend
+ from adapters.base.contract import AdapterContext
++from adapters.cmd_shim import assert_cmd_shim_argv_safe
+ from adapters.frontier.process_tree import run_managed_process
+ from adapters.model_adapter import ModelWorkerAdapter
+ 
+@@ -308,6 +309,7 @@ def _assert_no_forbidden(argv: list[str]) -> None:
+     Deterministic permission logic (Buildout Directive §4), not caller convention. Guards the
+     FLAGS only (call before the prompt is appended) so a benign prompt that happens to equal a
+     flag token is never misread as smuggling one."""
++    assert_cmd_shim_argv_safe(argv)
+     lowered = [a.lower() for a in argv]
+     for bad in _FORBIDDEN_CLAUDE_ARGS:
+         if bad in lowered:
+diff --git a/modules/sow/adapters/frontier/codex.py b/modules/sow/adapters/frontier/codex.py
+index c5b90f6..0921464 100644
+--- a/modules/sow/adapters/frontier/codex.py
++++ b/modules/sow/adapters/frontier/codex.py
+@@ -44,6 +44,7 @@ from typing import Any, Protocol, runtime_checkable
+ 
+ from adapters.base.backend import Backend, BackendAuthPause
+ from adapters.base.contract import AdapterContext
++from adapters.cmd_shim import assert_cmd_shim_argv_safe
+ from adapters.model_adapter import ModelWorkerAdapter
+ 
+ # Provider id — MUST equal the frozen node.schema.json `adapter` enum member and
+@@ -446,6 +447,7 @@ class CodexAuthError(BackendAuthPause):
+ def _assert_no_forbidden(argv: list[str]) -> None:
+     """Fail-closed guard: refuse to emit any credential-passing or sandbox/approval-bypass arg.
+     Deterministic permission logic (Buildout Directive §4), not caller convention."""
++    assert_cmd_shim_argv_safe(argv)
+     lowered = [a.lower() for a in argv]
+     for bad in _FORBIDDEN_CODEX_ARGS:
+         if bad in lowered:
+diff --git a/modules/sow/adapters/frontier/grok_build.py b/modules/sow/adapters/frontier/grok_build.py
+index 4d86b24..ff53d8b 100644
+--- a/modules/sow/adapters/frontier/grok_build.py
++++ b/modules/sow/adapters/frontier/grok_build.py
+@@ -201,6 +201,7 @@ def build_interactive_grok_command(executable: str, *, model: str | None = None,
+     # not a backend method; the guards are the shared policy either way.
+     C.assert_no_forbidden_provider_args(argv)
+     C.assert_no_untrusted_instruction_args(argv)
++    C.assert_cmd_shim_argv_safe(argv)
+     return argv
+ 
+ 
+diff --git a/modules/sow/adapters/frontier/process_tree.py b/modules/sow/adapters/frontier/process_tree.py
+index 9f26aac..1013825 100644
+--- a/modules/sow/adapters/frontier/process_tree.py
++++ b/modules/sow/adapters/frontier/process_tree.py
+@@ -12,6 +12,8 @@ import time
+ from dataclasses import dataclass
+ from typing import Any
+ 
++from adapters.cmd_shim import assert_cmd_shim_argv_safe
++
+ 
+ _JOB_MEMBER_FLAG = "--sovereign-job-member"
+ 
+@@ -351,6 +353,7 @@ def run_managed_process(
+     workspace binding IS its working directory because it has no `--cwd`-equivalent flag (`agy`):
+     without it the choice would have been between the job-object boundary and workspace
+     containment, and giving up either would be a real loss."""
++    assert_cmd_shim_argv_safe(cmd)
+     if os.name == "nt":
+         return _run_windows(
+             cmd, timeout=timeout, env=env, stdin=stdin, input_text=input_text, cwd=cwd)
+diff --git a/modules/sow/adapters/frontier/provider_cli_common.py b/modules/sow/adapters/frontier/provider_cli_common.py
+index 7b115e8..7099e8d 100644
+--- a/modules/sow/adapters/frontier/provider_cli_common.py
++++ b/modules/sow/adapters/frontier/provider_cli_common.py
+@@ -53,6 +53,7 @@ from dataclasses import dataclass, field
+ from typing import Any, Sequence
+ 
+ from adapters.base.backend import BackendAuthPause
++from adapters.cmd_shim import assert_cmd_shim_argv_safe
+ 
+ # ---------------------------------------------------------------------------------------------
+ # Credential isolation (operator directive §13; build directive §2.2)
+@@ -1383,6 +1384,7 @@ class FrontierProviderCliBackend:
+         benign prompt whose text happens to equal a flag token is never read as smuggling one."""
+         assert_no_forbidden_provider_args(argv)
+         assert_no_untrusted_instruction_args(argv)
++        assert_cmd_shim_argv_safe(argv)
+ 
+     def generate(self, prompt: str, *, max_tokens: int = 256) -> str:
+         import subprocess  # noqa: PLC0415 — local: the deterministic suite never reaches this
+diff --git a/modules/sow/tests/unit/test_cmd_shim_metacharacters.py b/modules/sow/tests/unit/test_cmd_shim_metacharacters.py
+new file mode 100644
+index 0000000..c6e5d05
+--- /dev/null
++++ b/modules/sow/tests/unit/test_cmd_shim_metacharacters.py
+@@ -0,0 +1,71 @@
++"""L-1 / N-03 — .cmd-shim argv must refuse cmd.exe metacharacters.
++
++INDEPENDENT_REVIEW_WINDOWS_HOST_20260816 N-03: `list2cmdline` quoting does not
++stop `& | ^ < > %` from executing through a `.cmd` shim. These tests pin the
++construction-site guard; they spawn nothing.
++"""
++from __future__ import annotations
++
++import pytest
++
++from adapters.cmd_shim import (
++    CMD_SHIM_METACHARS,
++    CmdShimMetacharacter,
++    assert_cmd_shim_argv_safe,
++)
++from adapters.frontier.process_tree import run_managed_process
++from adapters.frontier.provider_cli_common import FrontierProviderCliBackend
++
++
++HOSTILE = ("&", "|", "^", "<", ">", "%")
++
++
++def test_the_hostile_class_is_exactly_the_n03_payloads() -> None:
++    assert CMD_SHIM_METACHARS == frozenset("&|^<>%")
++
++
++@pytest.mark.parametrize("ch", HOSTILE)
++def test_a_cmd_shim_argv_carrying_a_hostile_payload_is_refused(ch: str) -> None:
++    argv = [r"C:\npm\claude.cmd", "--cwd", rf"C:\x\R{ch}echo INJECTED"]
++    with pytest.raises(CmdShimMetacharacter) as caught:
++        assert_cmd_shim_argv_safe(argv)
++    assert ch in str(caught.value)
++
++
++@pytest.mark.parametrize("ch", HOSTILE)
++def test_a_cmd_shim_executable_path_carrying_a_hostile_payload_is_refused(ch: str) -> None:
++    argv = [rf"C:\R{ch}D\grok.cmd", "-p", "hi"]
++    with pytest.raises(CmdShimMetacharacter):
++        assert_cmd_shim_argv_safe(argv)
++
++
++def test_a_clean_cmd_shim_argv_is_allowed() -> None:
++    assert_cmd_shim_argv_safe([r"C:\npm\claude.cmd", "--model", "opus", "-p", "hello"])
++
++
++def test_a_non_cmd_executable_is_not_this_guard() -> None:
++    argv = [r"C:\tools\claude.exe", "--cwd", r"C:\x\R&echo INJECTED"]
++    assert_cmd_shim_argv_safe(argv)
++
++
++def test_run_managed_process_refuses_before_spawn() -> None:
++    with pytest.raises(CmdShimMetacharacter):
++        run_managed_process(
++            [r"C:\npm\probe.cmd", "--cwd", r"C:\x\R&echo INJECTED"],
++            timeout=1.0,
++            env={},
++            stdin=None,
++        )
++
++
++def test_frontier_guard_refuses_cmd_shim_metacharacters() -> None:
++    class _Probe(FrontierProviderCliBackend):
++        provider = "probe"
++        executable_candidates = ("probe.cmd",)
++
++        def build_command(self, prompt: str) -> list[str]:
++            return [r"C:\npm\probe.cmd", "-p", prompt]
++
++    probe = _Probe(executable=r"C:\npm\probe.cmd")
++    with pytest.raises(CmdShimMetacharacter):
++        probe._guard([r"C:\npm\probe.cmd", "--cwd", r"C:\ws|evil"])
+-- 
+2.34.1
+

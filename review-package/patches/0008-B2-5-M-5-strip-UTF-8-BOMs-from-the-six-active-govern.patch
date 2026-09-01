@@ -1,0 +1,255 @@
+From 9567d48177f08ef3a381372a037f63de88bc0ea1 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 03:19:35 +0000
+Subject: [PATCH 08/20] B2-5 (M-5): strip UTF-8 BOMs from the six active
+ governance JSONs; fix the re-BOM writer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+BOMs (EF BB BF) stripped byte-exactly (each file lost exactly 3 bytes, nothing else) from SYSTEM_MANIFEST.json, constitution/constitutional_rules.json, constitution/promotion_policy.json, constitution/risk_policy.json, library/config/clu_runtime_policy.json, synthesis/synthesis_contract.json. Strict utf-8 JSON parsers rejected all six before the fix (JSONDecodeError 'Unexpected UTF-8 BOM'); both strict and sig parsers accept them after. New hashes recorded in the bundle.
+
+sovereign_product/server.py _write_manifest wrote SYSTEM_MANIFEST.json back with encoding='utf-8-sig', re-adding the BOM on every manifest update — changed to plain utf-8 so the strip sticks. Readers verified byte-level: system_manifest.py:185 and server.py:398 read utf-8-sig (accepts BOM-less content); server.py compiles.
+
+New regression guard tools/release/check_governance_bom.py (explicit enumeration of the six paths, no globs) + 5 tests incl. real-worktree strict-parse proof.
+
+Directive SWS-REM-DIR-20260828 R2 BATCH 2 item B2-5. Seat: builder qwen3.8-max. UTC: 2026-08-28T03:19:35+00:00
+---
+ modules/sovereign/SYSTEM_MANIFEST.json        |  2 +-
+ .../constitution/constitutional_rules.json    |  2 +-
+ .../constitution/promotion_policy.json        |  2 +-
+ .../sovereign/constitution/risk_policy.json   |  2 +-
+ .../library/config/clu_runtime_policy.json    |  2 +-
+ modules/sovereign/sovereign_product/server.py |  5 +-
+ .../synthesis/synthesis_contract.json         |  2 +-
+ tools/release/check_governance_bom.py         | 62 ++++++++++++++++
+ tools/release/test_check_governance_bom.py    | 71 +++++++++++++++++++
+ 9 files changed, 143 insertions(+), 7 deletions(-)
+ create mode 100644 tools/release/check_governance_bom.py
+ create mode 100644 tools/release/test_check_governance_bom.py
+
+diff --git a/modules/sovereign/SYSTEM_MANIFEST.json b/modules/sovereign/SYSTEM_MANIFEST.json
+index e7e3cc3..bd70ef4 100644
+--- a/modules/sovereign/SYSTEM_MANIFEST.json
++++ b/modules/sovereign/SYSTEM_MANIFEST.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+   "ARCHIVE_VERSION": "3.1.2",
+   "MODELS": {
+     "PRIMARY_REASONER": "qwen3:14b",
+diff --git a/modules/sovereign/constitution/constitutional_rules.json b/modules/sovereign/constitution/constitutional_rules.json
+index bb8d681..629a6ca 100644
+--- a/modules/sovereign/constitution/constitutional_rules.json
++++ b/modules/sovereign/constitution/constitutional_rules.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+   "schema_version": "1.0",
+   "rules": [
+     {
+diff --git a/modules/sovereign/constitution/promotion_policy.json b/modules/sovereign/constitution/promotion_policy.json
+index aa49b9e..a84df0b 100644
+--- a/modules/sovereign/constitution/promotion_policy.json
++++ b/modules/sovereign/constitution/promotion_policy.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+   "schema_version": "1.0",
+   "classes": [
+     {
+diff --git a/modules/sovereign/constitution/risk_policy.json b/modules/sovereign/constitution/risk_policy.json
+index 526c013..e117f0f 100644
+--- a/modules/sovereign/constitution/risk_policy.json
++++ b/modules/sovereign/constitution/risk_policy.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+   "schema_version": "1.0",
+   "thresholds": {
+     "minimum_convergence_for_review": 0.55,
+diff --git a/modules/sovereign/library/config/clu_runtime_policy.json b/modules/sovereign/library/config/clu_runtime_policy.json
+index 7f47715..322fb66 100644
+--- a/modules/sovereign/library/config/clu_runtime_policy.json
++++ b/modules/sovereign/library/config/clu_runtime_policy.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+     "clu_status":  "DEPRECATED_AND_DISABLED",
+     "default_enabled":  false,
+     "operator_override_required":  true,
+diff --git a/modules/sovereign/sovereign_product/server.py b/modules/sovereign/sovereign_product/server.py
+index f44d230..44a464c 100644
+--- a/modules/sovereign/sovereign_product/server.py
++++ b/modules/sovereign/sovereign_product/server.py
+@@ -649,7 +649,10 @@ class ProductService:
+             indent=2,
+         ) + "\n"
+         try:
+-            with temporary.open("w", encoding="utf-8-sig", newline="\n") as handle:
++            # M-5 (B2-5): write WITHOUT a BOM. The previous utf-8-sig writer
++            # re-introduced the BOM on every manifest update, which strict
++            # utf-8 JSON parsers reject.
++            with temporary.open("w", encoding="utf-8", newline="\n") as handle:
+                 handle.write(encoded)
+                 handle.flush()
+                 os.fsync(handle.fileno())
+diff --git a/modules/sovereign/synthesis/synthesis_contract.json b/modules/sovereign/synthesis/synthesis_contract.json
+index f3584eb..411d2c9 100644
+--- a/modules/sovereign/synthesis/synthesis_contract.json
++++ b/modules/sovereign/synthesis/synthesis_contract.json
+@@ -1,4 +1,4 @@
+-﻿{
++{
+   "schema_version": "1.0",
+   "canonical_output": {
+     "filename": "praxis_answer.json",
+diff --git a/tools/release/check_governance_bom.py b/tools/release/check_governance_bom.py
+new file mode 100644
+index 0000000..0615335
+--- /dev/null
++++ b/tools/release/check_governance_bom.py
+@@ -0,0 +1,62 @@
++#!/usr/bin/env python
++"""Governance-JSON BOM guard — SWS-REM-DIR-20260828 R2, B2-5 (M-5).
++
++Fails when any enumerated active governance JSON carries a UTF-8 BOM.
++The six files were stripped of BOMs in B2-5 (strict utf-8 JSON parsers
++reject a leading EF BB BF with 'Unexpected UTF-8 BOM'); this guard keeps
++them clean. Enumeration is explicit — no globs. Exit 0 clean, 1 BOM found
++or file missing, 2 usage error.
++"""
++
++from __future__ import annotations
++
++import argparse
++import os
++import sys
++from datetime import datetime, timezone
++
++DEFAULT_GOVERNANCE_JSON = (
++    "modules/sovereign/SYSTEM_MANIFEST.json",
++    "modules/sovereign/constitution/constitutional_rules.json",
++    "modules/sovereign/constitution/promotion_policy.json",
++    "modules/sovereign/constitution/risk_policy.json",
++    "modules/sovereign/library/config/clu_runtime_policy.json",
++    "modules/sovereign/synthesis/synthesis_contract.json",
++)
++
++BOM = b"\xef\xbb\xbf"
++
++
++def check(root: str, paths=DEFAULT_GOVERNANCE_JSON) -> list:
++    problems = []
++    for rel in paths:
++        full = os.path.join(root, rel.replace("/", os.sep))
++        if not os.path.isfile(full):
++            problems.append(f"{rel}: MISSING")
++            continue
++        with open(full, "rb") as f:
++            head = f.read(3)
++        if head == BOM:
++            problems.append(f"{rel}: UTF-8 BOM present")
++    return problems
++
++
++def main(argv=None) -> int:
++    ap = argparse.ArgumentParser(description="Governance JSON BOM guard")
++    ap.add_argument("--root", default=".")
++    args = ap.parse_args(argv)
++    if not os.path.isdir(args.root):
++        print(f"check_governance_bom: no such directory: {args.root}",
++              file=sys.stderr)
++        return 2
++    problems = check(args.root)
++    utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
++    verdict = "FAIL" if problems else "PASS"
++    print(f"check_governance_bom: {verdict} ({utc})")
++    for p in problems:
++        print(f"  PROBLEM {p}")
++    return 1 if problems else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/release/test_check_governance_bom.py b/tools/release/test_check_governance_bom.py
+new file mode 100644
+index 0000000..f2a0ff1
+--- /dev/null
++++ b/tools/release/test_check_governance_bom.py
+@@ -0,0 +1,71 @@
++#!/usr/bin/env python
++"""Tests for check_governance_bom.py (SWS-REM-DIR-20260828 R2 B2-5)."""
++
++from __future__ import annotations
++
++import json
++import os
++import shutil
++import sys
++import tempfile
++import unittest
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import check_governance_bom as cgb  # noqa: E402
++
++WORKTREE_ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
++SOV = os.path.join(WORKTREE_ROOT, "modules", "sovereign")
++BOM = b"\xef\xbb\xbf"
++
++
++class BomGuardTests(unittest.TestCase):
++    def setUp(self):
++        self.tmp = tempfile.mkdtemp(prefix="bom-test-")
++        self.addCleanup(shutil.rmtree, self.tmp, True)
++
++    def _put(self, rel, payload: bytes):
++        full = os.path.join(self.tmp, rel.replace("/", os.sep))
++        os.makedirs(os.path.dirname(full), exist_ok=True)
++        with open(full, "wb") as f:
++            f.write(payload)
++
++    def test_clean_files_pass(self):
++        for rel in cgb.DEFAULT_GOVERNANCE_JSON:
++            self._put(rel, b'{"a": 1}\n')
++        self.assertEqual(cgb.check(self.tmp), [])
++
++    def test_bom_detected(self):
++        for rel in cgb.DEFAULT_GOVERNANCE_JSON:
++            self._put(rel, b'{"a": 1}\n')
++        victim = cgb.DEFAULT_GOVERNANCE_JSON[2]
++        self._put(victim, BOM + b'{"a": 1}\n')
++        problems = cgb.check(self.tmp)
++        self.assertEqual(problems, [f"{victim}: UTF-8 BOM present"])
++
++    def test_missing_file_reported(self):
++        for rel in cgb.DEFAULT_GOVERNANCE_JSON[1:]:
++            self._put(rel, b'{}\n')
++        problems = cgb.check(self.tmp)
++        self.assertEqual(problems, [f"{cgb.DEFAULT_GOVERNANCE_JSON[0]}: MISSING"])
++
++
++class WorktreeBomTests(unittest.TestCase):
++    """Against the real worktree after B2-5: no BOMs, strict-utf-8 parseable."""
++
++    def test_no_boms_in_worktree(self):
++        if not os.path.isdir(SOV):
++            self.skipTest("worktree sovereign module not present")
++        self.assertEqual(cgb.check(WORKTREE_ROOT), [])
++
++    def test_strict_utf8_parse(self):
++        if not os.path.isdir(SOV):
++            self.skipTest("worktree sovereign module not present")
++        for rel in cgb.DEFAULT_GOVERNANCE_JSON:
++            with open(os.path.join(WORKTREE_ROOT, rel.replace("/", os.sep)),
++                      "r", encoding="utf-8") as f:
++                json.load(f)  # raises on BOM
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
+-- 
+2.34.1
+

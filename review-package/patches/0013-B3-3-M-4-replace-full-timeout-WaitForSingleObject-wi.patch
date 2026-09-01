@@ -1,0 +1,51 @@
+From ef47226a94d849ca6027af591fac0eadfa55d462 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 04:19:01 +0000
+Subject: [PATCH 13/20] B3-3 (M-4): replace full-timeout WaitForSingleObject
+ with bounded pids() polling
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+A Windows Job Object handle is signaled only on an end-of-job time limit, never on member exit, so terminate_and_wait's WaitForSingleObject(handle, 15000) ran to the full 15 s ceiling on EVERY managed run — including clean exits (independent review F-3: supervised median 15.150 s vs bare 0.028 s). The wait is now a pids() poll with a 50 ms sleep, bounded by timeout_s: it returns the moment the last member is gone, or the surviving pids at the deadline. Semantics preserved: () on empty, remaining tuple on timeout; TerminateJobObject path unchanged.
+
+Evidence: timing probe 15.122 s -> 0.120 s for one trivial managed run (126x). Integration file test_frontier_process_tree.py: the 10-run reap test 150 s-class -> 7.51 s; single-call test 15.14 s -> 0.14 s; 6/6 PASS in 10.12 s total. test_provider_decoding_parity.py 7/7 OK (0.69 s). Two sibling unit suites (test_cross_entry_point_control_state, test_no_live_provider_calls_in_suite) are uncollectable in this environment for a pre-existing missing third-party dependency (jsonschema; sow venv excluded from baseline) — environmental, predates this change, and installing into host site-packages is outside the builder write boundary.
+
+Directive SWS-REM-DIR-20260828 R2 BATCH 3 item B3-3. Seat: builder qwen3.8-max. UTC: 2026-08-28T04:19:01+00:00
+---
+ modules/sow/adapters/frontier/process_tree.py | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/modules/sow/adapters/frontier/process_tree.py b/modules/sow/adapters/frontier/process_tree.py
+index 184f9cb..9f26aac 100644
+--- a/modules/sow/adapters/frontier/process_tree.py
++++ b/modules/sow/adapters/frontier/process_tree.py
+@@ -125,11 +125,19 @@ class WindowsJob:
+     def terminate_and_wait(self, timeout_s: float) -> tuple[int, ...]:
+         if self.pids() and not self._kernel32.TerminateJobObject(self.handle, 1):
+             raise ctypes.WinError(ctypes.get_last_error())
+-        result = self._kernel32.WaitForSingleObject(self.handle, max(1, int(timeout_s * 1000)))
+-        remaining = self.pids()
+-        if result != self._WAIT_OBJECT_0 or remaining:
+-            return remaining
+-        return ()
++        # M-4: a Job Object handle is signaled only on an end-of-job TIME LIMIT, never on
++        # member exit — WaitForSingleObject here always ran to the full ceiling even when the
++        # job was already empty (a measured ~15 s tax on EVERY managed run; independent review
++        # F-3 / INDEPENDENT_REVIEW_WINDOWS_HOST_20260816.md). Poll the pid list instead: the
++        # wait ends as soon as the last member is gone, still bounded by timeout_s.
++        deadline = time.monotonic() + max(0.001, timeout_s)
++        while True:
++            remaining = self.pids()
++            if not remaining:
++                return ()
++            if time.monotonic() >= deadline:
++                return remaining
++            time.sleep(0.05)
+ 
+     def close(self) -> None:
+         if self.handle:
+-- 
+2.34.1
+

@@ -1,0 +1,432 @@
+From c287dab23444bbdfb36ef4c4d20b331175c62349 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 11:57:57 -0500
+Subject: [PATCH 8/9] B4E N-14: align shell presentation with visual baseline
+
+---
+ shell/BUILD-MANIFEST.txt      |  14 +++--
+ shell/static/app.css          | 113 +++++++++++++++++++++++++++++-----
+ shell/static/app.js           |   5 +-
+ shell/static/brand-mark.svg   |   8 +++
+ shell/static/index.html       |  20 ++++--
+ shell/static/workspace-bg.svg |  33 ++++++++++
+ shell/tests/test_render.py    |   7 +--
+ 7 files changed, 169 insertions(+), 31 deletions(-)
+ create mode 100644 shell/static/brand-mark.svg
+ create mode 100644 shell/static/workspace-bg.svg
+
+diff --git a/shell/BUILD-MANIFEST.txt b/shell/BUILD-MANIFEST.txt
+index 2713573..6279eb9 100644
+--- a/shell/BUILD-MANIFEST.txt
++++ b/shell/BUILD-MANIFEST.txt
+@@ -1,9 +1,9 @@
+ # SWS-BUILD-MANIFEST v1
+-# utc: 2026-08-28T16:49:12Z
++# utc: 2026-08-28T16:55:59Z
+ # producer: claude-code REM-01
+ # root: shell/
+ # excluded: __pycache__/**, BUILD-MANIFEST.txt (self)
+-# entries: 65
++# entries: 67
+ 1ca7821b80863858f0beaad752ad7603d4b90e9f5258744109f77a4b6e8baab9  config/install.json
+ 5f57918f7785e25282a276d27569f602812eb74b857ba4e27107f44f67c4537e  modules/debate.json
+ 661d36050de163ffd6a0558d32aa0977110c4e25c8bc6e29d78fe5a5a10e5c05  modules/distillery.json
+@@ -24,10 +24,12 @@ b200f17871bbd03f9d2c69928396286f4a57705188fdce1041f24754d55c0ea6  src/redact.py
+ dfae2514e4972c93028b61c8a554f3b91a2f94f86b5fe124b2048309ea8006d6  src/startup_test.py
+ d448fd417b669783c41390e3b7af8d575c3f380e708b521a4b24c5ef3e20c676  src/states.py
+ bb09c62b2388229fcd729381d4f10cd1eb307cf9e7a74fc935ce3c32a3ae1fc7  src/supervisor.py
+-2e9deb8dc5639ecae3e1ee28d1768dc5b94e206373b6afd0783e4b27be9c4597  static/app.css
+-487c67606aadc8f50fda7786d6d8492e475da1b3da855822ea733f6e7e839f3a  static/app.js
++88172e1fc78bc0cb6664a58a919d056957f86d2b7f924370cb0abe74906e35c7  static/app.css
++8404bdb7ff9969af7ed78452f0ccd1a0cee6dc0498e95736e9302d3962b7d8eb  static/app.js
++8a857b46058e252b1d3926e68b18da34e712d0b88b85197a1c9fd736e298f7a7  static/brand-mark.svg
+ 8e07311af72fb48b4406460af345f0f42188d889bee2578f9c7033e07e41e020  static/icon.svg
+-cfa71fe7d55735a0937bf6611b15190a38e1ecab314d20f2c9158638163fc623  static/index.html
++71e5b816b1196b7c2790d1fafbef472120aa5834c3d3dda9e25da82f3d30dba1  static/index.html
++18cccf8ae3440206e554110e8b2024959791b589b0940abf54bc4514c8065203  static/workspace-bg.svg
+ dc5387d70930ccb5c6e7ef4edaf14ffc64f1b12a5874e2e6f4e8673ae5edeb8a  tests/__init__.py
+ 579730f1125e5dccef2e90a830e8d5da2c1b4a7ebc756c6326b54f6f6c97fda8  tests/_fswatch.py
+ d0932963bbbe0fbae0998e63e14de43353152d41f5dcc560a83f99a036a64050  tests/_harness.py
+@@ -58,7 +60,7 @@ b39ba48b46919cb7a2d19b242245717afea5afb9a56dada6db620987eaa8ac74  tests/test_pla
+ 46dcd300db0845e98b3e4eeb12ddd027981788c42548543ead680a104d9a5960  tests/test_reasoning_failure_no_fallback.py
+ 911d859dbbeb3108c24faf8ed272b87bb1529ec12198667707c42ebeb2fe40a2  tests/test_redaction_surfaces.py
+ 64359159bd4b42dbe7811cb0219d3bbd1d74f746fb156bfd26c2ce8ce645489b  tests/test_registry_fields_projected.py
+-8afb5c70fb69932e4905b1c6b6a4f930f317050651a3069a7632f2cad06c3906  tests/test_render.py
++09a2b09c2a7167fa699db12b03aa86d193469bd456dca9d77c8b90075edc0db1  tests/test_render.py
+ e1fb590327e0fceb9228b7c23ff0406a6d91c9d203baea91907779f3c443d2f8  tests/test_router_no_unrequested_transition.py
+ a829ebe603c03a7ad5897384710a9b0f346b441e1778f5dc4abcef416aadea2a  tests/test_selection_flow.py
+ 52d7c2565245ac5e47cc88e4fe5545bcc267230a48cbb1cb13df41854b6938fa  tests/test_shell.py
+diff --git a/shell/static/app.css b/shell/static/app.css
+index 7b5a76f..1dbe610 100644
+--- a/shell/static/app.css
++++ b/shell/static/app.css
+@@ -28,6 +28,8 @@
+   --radius: 6px;
+   --font: ui-monospace, monospace;
+   --mono: "Cascadia Code", Consolas, monospace;
++  --panel-alpha: rgba(21, 27, 40, 0.90);
++  --sidebar-alpha: rgba(13, 18, 28, 0.88);
+ }
+ 
+ @media (prefers-color-scheme: light) {
+@@ -44,6 +46,8 @@
+     --ok: #2f7a49;
+     --warning: #8a6008;
+     --danger: #c8394f;
++    --panel-alpha: #ffffff;
++    --sidebar-alpha: #eceef1;
+   }
+ }
+ 
+@@ -62,7 +66,7 @@ body {
+ }
+ 
+ body {
+-  background: var(--bg);
++  background: var(--bg) url("/static/workspace-bg.svg") center bottom / cover fixed no-repeat;
+   color: var(--text);
+   font-family: var(--font);
+   font-size: 14px;
+@@ -72,25 +76,69 @@ body {
+ /* ---------- layout ---------- */
+ 
+ .shell {
+-  max-width: 1200px;
++  width: 100%;
++  max-width: 1720px;
+   margin: 0 auto;
+-  padding: 24px 16px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 16px;
++  padding: 20px 24px;
++  display: grid;
++  grid-template-columns: 270px minmax(0, 1fr);
++  gap: 16px 28px;
+ }
+ 
+ /* ---------- header ---------- */
+ 
+ .header {
++  grid-column: 1 / -1;
++  display: grid;
++  grid-template-columns: 270px minmax(0, 1fr);
++  gap: 28px;
++  align-items: stretch;
++}
++
++.identity-brand {
++  display: flex;
++  align-items: center;
++  gap: 12px;
++  min-height: 48px;
++  padding-right: 24px;
++  border-right: 1px solid var(--border);
++}
++
++.brand-mark {
++  width: 42px;
++  height: 42px;
++  flex: 0 0 auto;
++}
++
++.brand-copy {
++  display: flex;
++  flex-direction: column;
++  gap: 2px;
++  min-width: 0;
++}
++
++.brand-title {
++  color: var(--text);
++  font-size: 14px;
++  font-weight: 700;
++  letter-spacing: 0.06em;
++  white-space: nowrap;
++}
++
++.brand-subtitle {
++  color: var(--text-muted);
++  font-size: 10px;
++  letter-spacing: 0.12em;
++}
++
++.header-bar {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   gap: 16px;
+   flex-wrap: wrap;
+-  background: var(--sidebar);
++  background: var(--sidebar-alpha);
+   border: 1px solid var(--border);
+-  border-bottom: 1px solid var(--border);
+   border-radius: var(--radius);
+   padding: 12px 16px;
+ }
+@@ -162,7 +210,8 @@ body {
+ /* ---------- collapsible panels ---------- */
+ 
+ .panel {
+-  background: var(--panel);
++  grid-column: 2;
++  background: var(--panel-alpha);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+ }
+@@ -271,6 +320,7 @@ body {
+ /* ---------- module grid & cards ---------- */
+ 
+ .module-grid {
++  grid-column: 2;
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 16px;
+@@ -280,7 +330,7 @@ body {
+ }
+ 
+ .module-card {
+-  background: var(--panel);
++  background: var(--panel-alpha);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   padding: 16px;
+@@ -393,8 +443,8 @@ body {
+   appearance: none;
+   border: 1px solid var(--accent-dim);
+   border-radius: var(--radius);
+-  background: var(--accent);
+-  color: var(--bg);
++  background: transparent;
++  color: var(--text-muted);
+   font-family: var(--font);
+   font-size: 13px;
+   font-weight: 600;
+@@ -403,6 +453,15 @@ body {
+   transition: background-color 120ms ease, border-color 120ms ease;
+ }
+ 
++.btn-primary {
++  background: var(--accent);
++  color: var(--bg);
++}
++
++.btn-secondary:hover:not(:disabled) {
++  color: var(--text);
++}
++
+ .btn:hover:not(:disabled) {
+   background: var(--accent-dim);
+ }
+@@ -444,7 +503,7 @@ body {
+ 
+ .log-output {
+   margin: 0;
+-  background: var(--panel);
++  background: var(--panel-alpha);
+   color: var(--text);
+   font-family: var(--mono);
+   font-size: 12px;
+@@ -461,6 +520,7 @@ body {
+ /* ---------- footer & misc ---------- */
+ 
+ .footer {
++  grid-column: 2;
+   display: flex;
+   justify-content: space-between;
+   gap: 8px;
+@@ -489,11 +549,36 @@ body {
+ /* ---------- responsive ---------- */
+ 
+ @media (max-width: 720px) {
+-  .module-grid {
++  body {
++    background-position: 35% bottom;
++  }
++
++  .shell {
+     grid-template-columns: 1fr;
++    padding: 16px;
+   }
+ 
+   .header {
++    grid-template-columns: 1fr;
++    gap: 12px;
++  }
++
++  .identity-brand {
++    border-right: 0;
++    padding-right: 0;
++  }
++
++  .panel,
++  .module-grid,
++  .footer {
++    grid-column: 1;
++  }
++
++  .module-grid {
++    grid-template-columns: 1fr;
++  }
++
++  .header-bar {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 8px;
+diff --git a/shell/static/app.js b/shell/static/app.js
+index 87e6841..90bdbe8 100644
+--- a/shell/static/app.js
++++ b/shell/static/app.js
+@@ -436,7 +436,8 @@
+       for (const pair of ACTION_LABELS) {
+         const action = pair[0];
+         const label = pair[1];
+-        const btn = make("button", "btn", label);
++        const primary = action === "start" || action === "open" || action === "test";
++        const btn = make("button", "btn " + (primary ? "btn-primary" : "btn-secondary"), label);
+         btn.type = "button";
+         btn.dataset.action = action;
+         btn.setAttribute("aria-label", label + " — " + mod.name);
+@@ -694,7 +695,7 @@
+       const build = firstString(info.build_id, info.build, info.commit);
+       const host = firstString(info.host, info.hostname);
+ 
+-      if (version) el.version.textContent = "v " + version;
++      if (version) el.version.textContent = version;
+       if (build) el.build.textContent = "build " + build;
+       if (host) el.host.textContent = host;
+ 
+diff --git a/shell/static/brand-mark.svg b/shell/static/brand-mark.svg
+new file mode 100644
+index 0000000..77c9096
+--- /dev/null
++++ b/shell/static/brand-mark.svg
+@@ -0,0 +1,8 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sovereign diamond mark">
++  <g fill="none" stroke="#c7d1de" stroke-width="2" stroke-linejoin="round">
++    <path d="M32 3 54 20 49 46 32 61 15 46 10 20Z"/>
++    <path d="M32 3 42 20 37 48 32 61 27 48 22 20Z"/>
++    <path d="m10 20 12 5 10-9 10 9 12-5M15 46l12-9 5 11 5-11 12 9"/>
++  </g>
++  <path d="M32 9v45M18 21l14 33 14-33" fill="none" stroke="#7fc8e8" stroke-width="1.5"/>
++</svg>
+diff --git a/shell/static/index.html b/shell/static/index.html
+index b273454..c43bd8b 100644
+--- a/shell/static/index.html
++++ b/shell/static/index.html
+@@ -12,14 +12,23 @@
+ <body>
+   <div class="shell">
+ 
+-    <!-- Header bar: SWS version, build ID, host, clock, document links -->
++    <!-- Branded identity rail + breadcrumb bar, matching the approved shell capture. -->
+     <header class="header">
+-      <div class="header-brand">
++      <div class="identity-brand" aria-label="Sovereign Workspace Systems Control">
++        <img class="brand-mark" src="/static/brand-mark.svg" alt="">
++        <div class="brand-copy">
++          <span class="brand-title">SOVEREIGN WORKSPACE</span>
++          <span class="brand-subtitle">SYSTEMS CONTROL</span>
++        </div>
++      </div>
++      <div class="header-bar">
++      <div class="header-brand" aria-label="Workspace build identity">
+         <span class="header-title">SWS</span>
+-        <span class="header-ver" id="shell-version">v —</span>
+-        <span class="header-sep" aria-hidden="true">·</span>
++        <span class="header-sep" aria-hidden="true">›</span>
++        <span class="header-ver" id="shell-version">SWS-UI-001 v1.2</span>
++        <span class="header-sep" aria-hidden="true">›</span>
+         <span class="header-build" id="shell-build">build —</span>
+-        <span class="header-sep" aria-hidden="true">·</span>
++        <span class="header-sep" aria-hidden="true">›</span>
+         <span class="header-host" id="shell-host">host —</span>
+       </div>
+       <div class="header-right">
+@@ -30,6 +39,7 @@
+         </nav>
+         <time class="header-clock" id="shell-clock">--:--:--</time>
+       </div>
++      </div>
+     </header>
+ 
+     <!-- Pre-flight panel (collapsible): populated by app.js -->
+diff --git a/shell/static/workspace-bg.svg b/shell/static/workspace-bg.svg
+new file mode 100644
+index 0000000..a13efbd
+--- /dev/null
++++ b/shell/static/workspace-bg.svg
+@@ -0,0 +1,33 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
++  <defs>
++    <radialGradient id="earth" cx="52%" cy="32%" r="68%">
++      <stop offset="0" stop-color="#12325a"/>
++      <stop offset="0.62" stop-color="#07162b"/>
++      <stop offset="0.88" stop-color="#020711"/>
++      <stop offset="1" stop-color="#01040a" stop-opacity="0"/>
++    </radialGradient>
++    <linearGradient id="limb" x1="0" y1="0" x2="1" y2="0">
++      <stop offset="0" stop-color="#1877d8" stop-opacity="0"/>
++      <stop offset="0.5" stop-color="#2f8fff" stop-opacity="0.75"/>
++      <stop offset="1" stop-color="#7fc8e8" stop-opacity="0.15"/>
++    </linearGradient>
++    <filter id="soft"><feGaussianBlur stdDeviation="10"/></filter>
++  </defs>
++  <rect width="1920" height="1080" fill="#05080f"/>
++  <g fill="#2f6bff" opacity="0.42">
++    <circle cx="75" cy="170" r="1"/><circle cx="180" cy="230" r="1.5"/><circle cx="312" cy="108" r="1"/>
++    <circle cx="480" cy="272" r="1"/><circle cx="680" cy="112" r="1.3"/><circle cx="925" cy="178" r="1"/>
++    <circle cx="1180" cy="90" r="1.4"/><circle cx="1420" cy="188" r="1"/><circle cx="1740" cy="120" r="1.5"/>
++    <circle cx="1650" cy="312" r="1"/><circle cx="1510" cy="260" r="1.2"/><circle cx="238" cy="402" r="1"/>
++  </g>
++  <ellipse cx="1040" cy="1190" rx="1180" ry="760" fill="url(#earth)"/>
++  <path d="M-80 790C280 560 650 520 1010 610s680 50 1010-170" fill="none" stroke="url(#limb)" stroke-width="8" filter="url(#soft)"/>
++  <g fill="none" stroke="#1465bb" stroke-width="1" opacity="0.28">
++    <path d="M0 805 180 700 360 748 530 630 720 690 910 610"/><path d="M1010 680 1210 590 1420 660 1600 540 1920 610"/>
++    <path d="M80 920 260 780 430 850 620 730 820 800"/><path d="M1130 830 1300 710 1480 790 1690 650 1880 720"/>
++  </g>
++  <g fill="#e8a33d" opacity="0.45">
++    <circle cx="210" cy="840" r="2"/><circle cx="360" cy="900" r="1.5"/><circle cx="520" cy="820" r="2"/>
++    <circle cx="1450" cy="860" r="1.5"/><circle cx="1620" cy="790" r="2"/><circle cx="1780" cy="900" r="1.5"/>
++  </g>
++</svg>
+diff --git a/shell/tests/test_render.py b/shell/tests/test_render.py
+index 5ec79de..ae8c8de 100644
+--- a/shell/tests/test_render.py
++++ b/shell/tests/test_render.py
+@@ -358,7 +358,7 @@ class TestRenderProofs(unittest.TestCase):
+     def test_rendered_dom(self):
+         edge = self._edge_path()
+         prof = tempfile.mkdtemp(prefix="sws-h17-")
+-        lines = [header("H-17 - rendered DOM of / (headless Edge) shows the four cards, "
++        lines = [header("H-17 - rendered DOM of / (headless Edge) shows the five cards, "
+                         "their action rows, and the disabled Distillery controls")]
+         proc, port, nonce = start_shell()
+         url = "http://127.0.0.1:{}/".format(port)
+@@ -378,7 +378,7 @@ class TestRenderProofs(unittest.TestCase):
+             cards = _CardDOM()
+             cards.feed(dom)
+             lines.append("card order      : {}".format(cards.order))
+-            self.assertEqual(cards.order, ["sovereign", "sow", "debate", "distillery"])
++            self.assertEqual(cards.order, ["sovereign", "sow", "tokencenter", "debate", "distillery"])
+ 
+             expected_actions = {"start", "stop", "restart", "open", "test", "logs"}
+             for mid in cards.order:
+@@ -414,7 +414,7 @@ class TestRenderProofs(unittest.TestCase):
+ 
+             lines.append("")
+             lines.append("edge binary: {}".format(edge))
+-            lines.append("RESULT: four cards in order, six-action rows per contract "
++            lines.append("RESULT: five cards in order, six-action rows per contract "
+                          "section 7.3(2), Distillery controls disabled, PNG differs from "
+                          "the blank render.")
+             write_artifact("h17-dom.txt", "\n".join(lines) + "\n")
+@@ -464,4 +464,3 @@ if __name__ == "__main__":
+ 
+ 
+ 
+-
+-- 
+2.34.1
+

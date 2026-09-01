@@ -1,0 +1,724 @@
+From d7441dd9d746b18a52127c195e3d1d53d85b7cc6 Mon Sep 17 00:00:00 2001
+From: "builder qwen3.8-max (SWS-REM-DIR-20260828)"
+ <builder.qwen@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 03:14:26 +0000
+Subject: [PATCH 07/20] B2-4 (M-3): classify all renderer.js innerHTML sites;
+ esc() the hazards; mechanical audit gate
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+17 innerHTML sites in modules/sow/apps/desktop/renderer/renderer.js classified STATIC / ESCAPED / HAZARD. Five hazard interpolations wrapped in esc(): layout.summary.workers (recovery notice builder), t.contextRouted.count (inspector taskCard), op.summary.task_count/message_count/debate_count (live-orchestration summary), summary.taskCount/artifactCount/gateCount/unattributedCount/anomalyCount (artifact/gate summary), and counts.available/counts.total (picker head). All are model- or control-plane-supplied values that previously reached markup unescaped.
+
+New mechanical gate tools/release/innerhtml_sink_audit.py: walks every .innerHTML RHS (including templates inside .map callbacks) plus ledger-enumerated construction fragments and their scope closure; classifies each \ as ESCAPED/GUARANTEED/COMPOSITE/MUST-JUSTIFY. The 27 remaining MUST-JUSTIFY interpolations (static ternaries + esc-only row-builder delegations + integer indices) each carry a byte-level justification in tools/release/innerhtml_audit.json. No globs anywhere — explicit enumeration.
+
+Fail-before: 39 unjustified incl. all hazards. Pass-after: 112 interpolations, 0 unjustified. Scanner self-tests 12/12. Affected suite: node --test apps/desktop = 1104/1104 pass.
+
+Directive SWS-REM-DIR-20260828 R2 BATCH 2 item B2-4. Seat: builder qwen3.8-max. UTC: 2026-08-28T03:14:26+00:00
+---
+ modules/sow/apps/desktop/renderer/renderer.js |  12 +-
+ tools/release/innerhtml_audit.json            | 130 ++++++
+ tools/release/innerhtml_sink_audit.py         | 397 ++++++++++++++++++
+ tools/release/test_innerhtml_sink_audit.py    |  98 +++++
+ 4 files changed, 631 insertions(+), 6 deletions(-)
+ create mode 100644 tools/release/innerhtml_audit.json
+ create mode 100644 tools/release/innerhtml_sink_audit.py
+ create mode 100644 tools/release/test_innerhtml_sink_audit.py
+
+diff --git a/modules/sow/apps/desktop/renderer/renderer.js b/modules/sow/apps/desktop/renderer/renderer.js
+index f859152..eaf0782 100644
+--- a/modules/sow/apps/desktop/renderer/renderer.js
++++ b/modules/sow/apps/desktop/renderer/renderer.js
+@@ -557,7 +557,7 @@ S.onRecovery((info) => {
+   if (!relaunchIds.length && !layout) { interruptedNotice = null; return; }
+   const parts = [];
+   if (layout) {
+-    parts.push(`✓ conductor-first layout restored — CONDUCTOR pane 1 pinned, ${layout.summary.workers} worker pane(s), `
++    parts.push(`✓ conductor-first layout restored — CONDUCTOR pane 1 pinned, ${esc(layout.summary.workers)} worker pane(s), `
+       + `admission ${layout.admissionOpen ? "OPEN" : "SHUT (awaiting a verified channel)"}`);
+   }
+   if (relaunchIds.length) {
+@@ -659,7 +659,7 @@ function renderInspector(res) {
+     <span class="dim">${esc((a.hash || "").slice(0, 16))}</span> <span class="dim">${esc(a.author || "")}</span></div>`;
+   const taskCard = (t) => `<div class="ins-task"><div class="ins-title">${esc(t.taskId)}</div>
+     <div class="ins-ctx">${t.contextRouted
+-      ? `routed: ${esc(t.contextRouted.role || "?")} · ${t.contextRouted.count} entries`
++      ? `routed: ${esc(t.contextRouted.role || "?")} · ${esc(t.contextRouted.count)} entries`
+       : `<span class="dim">context routed: not readable (ephemeral)</span>`}</div>
+     ${t.gateChain.map(gateRow).join("") || '<div class="dim">no gate events</div>'}
+     ${t.artifacts.map(artRow).join("") || '<div class="dim">no artifacts</div>'}</div>`;
+@@ -669,7 +669,7 @@ function renderInspector(res) {
+     ${degraded}
+     <div class="ins-section">LIVE ORCHESTRATION</div>
+     <div class="ins-sum">${opNodes.length} nodes · ${opAvailable
+-      ? `${op.summary.task_count} tasks · ${op.summary.message_count} messages · ${op.summary.debate_count} debates`
++      ? `${esc(op.summary.task_count)} tasks · ${esc(op.summary.message_count)} messages · ${esc(op.summary.debate_count)} debates`
+       : `<span class="warn-t">shared governed state UNREADABLE — ${esc(op.error) || "fail-closed"}</span>`}</div>
+     ${opNodes.map(nodeRow).join("") || '<div class="dim">no live governed nodes</div>'}
+     ${opAvailable
+@@ -677,8 +677,8 @@ function renderInspector(res) {
+       : '<div class="dim">assignments, messages and debates could not be read — this is not a count of zero</div>'}
+     <div class="ins-section">ARTIFACT / GATE EVIDENCE</div>
+     <div class="ins-sum">${legacyAvailable
+-      ? `${summary.taskCount} tasks · ${summary.artifactCount} artifacts · ${summary.gateCount} gates
+-      · ${summary.unattributedCount} unattributed · ${summary.anomalyCount} anomalies
++      ? `${esc(summary.taskCount)} tasks · ${esc(summary.artifactCount)} artifacts · ${esc(summary.gateCount)} gates
++      · ${esc(summary.unattributedCount)} unattributed · ${esc(summary.anomalyCount)} anomalies
+       ${routingReadable ? "" : '· <span class="warn-t">routing not readable</span>'}`
+       : `<span class="warn-t">artifact/gate evidence UNREADABLE — ${esc(res.legacyError) || "fail-closed"}</span>`}</div>
+     ${legacyAvailable
+@@ -905,7 +905,7 @@ function renderPicker(model) {
+     return PickerChrome.providerGroupHtml(g, opts, esc);
+   }).join("");
+   body.innerHTML = `<div class="pk-head-row"><span class="dim">${target}</span>`
+-    + `<span class="dim">${counts.available || 0}/${counts.total || 0} available</span></div>`
++    + `<span class="dim">${esc(counts.available || 0)}/${esc(counts.total || 0)} available</span></div>`
+     + authLine + (groups || '<div class="dim">no options enumerated</div>')
+     + `<div id="pk-result"></div>`;
+   wirePickerButtons(flat);
+diff --git a/tools/release/innerhtml_audit.json b/tools/release/innerhtml_audit.json
+new file mode 100644
+index 0000000..82900db
+--- /dev/null
++++ b/tools/release/innerhtml_audit.json
+@@ -0,0 +1,130 @@
++{
++  "audit": "innerHTML interpolation ledger — SWS-REM-DIR-20260828 R2 B2-4 (M-3)",
++  "scope_file": "modules/sow/apps/desktop/renderer/renderer.js",
++  "policy": "Scope = every `.innerHTML =` RHS in the audited file (walked through callbacks) PLUS the templates enumerated by construction_fragments (content assigned to sinks later, and the row builders sinks concatenate). Every interpolation flagged MUST-JUSTIFY by tools/release/innerhtml_sink_audit.py needs a justifications entry naming its class (STATIC or ESCAPED-BY-CONSTRUCTION) and the byte-level reason it cannot inject markup. esc-wrapped, numeric, and .length interpolations never need entries. Explicit enumeration — no globs.",
++  "construction_fragments": [
++    "conductor-first layout restored",
++    "need supervised relaunch",
++    "ins-node",
++    "ins-msg",
++    "ins-debate",
++    "ins-task",
++    "ins-gate",
++    "ins-art",
++    "appr-item",
++    "sb-chip",
++    "pk-opt",
++    "pk-res",
++    "pk-auth"
++  ],
++  "justifications": {
++    "n.ready ? \"ACCEPTED\" : \"CANDIDATE\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:641 — ternary with string-literal branches only (class-name switch)."
++    },
++    "n.ready ? \"READY\" : esc(n.mcp_state || n.node_state)": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "renderer.js:641 — branches are the literal \"READY\" or esc(n.mcp_state || n.node_state)."
++    },
++    "d.state === \"OPEN\" ? \"CANDIDATE\" : \"ACCEPTED\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:645 — ternary with string-literal branches only (class-name switch)."
++    },
++    "messages.map(msgRow).join(\"\")": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "msgRow builder renderer.js:643-644 wraps every interpolation in esc() (message_kind, sender_node_id, recipient join, body, message_id)."
++    },
++    "debates.map(debateRow).join(\"\")": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "debateRow builder renderer.js:645-648 wraps every dynamic field in esc(); the only un-esc'd value is (d.turns || []).length, a language-guaranteed integer."
++    },
++    "g.derived ? ' <span class=\"badge\">derived</span>' : \"\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:656 — ternary branches are a static markup literal and the empty string."
++    },
++    "t.gateChain.map(gateRow).join(\"\") || '<div class=\"dim\">no gate events</div>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "gateRow builder renderer.js:656-657 esc()s verdict/author/entryStatus; the || fallback is a static literal (renderer.js:664)."
++    },
++    "t.artifacts.map(artRow).join(\"\") || '<div class=\"dim\">no artifacts</div>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "artRow builder renderer.js:658-659 esc()s kind/status/hash-slice/author; the || fallback is a static literal (renderer.js:665)."
++    },
++    "routingReadable ? \"\" : '· <span class=\"warn-t\">routing not readable</span>'": {
++      "class": "STATIC",
++      "reason": "renderer.js:682 — ternary branches are the empty string and a static markup literal."
++    },
++    "unatt.gates.map(gateRow).join(\"\")": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "gateRow builder renderer.js:656-657 esc()s every dynamic field (renderer.js:689 call site)."
++    },
++    "unatt.artifacts.map(artRow).join(\"\")": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "artRow builder renderer.js:658-659 esc()s every dynamic field (renderer.js:689 call site)."
++    },
++    "degraded": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "degraded built at renderer.js:628 — either \"\" or a template whose only dynamic value is esc(res.error) with a static fallback."
++    },
++    "opNodes.map(nodeRow).join(\"\") || '<div class=\"dim\">no live governed nodes</div>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "nodeRow builder renderer.js:640-642 esc()s role/provider_id/model_id/state/node_id/pane_id/pid/mcp_state; the || fallback is a static literal (renderer.js:674)."
++    },
++    "opAvailable ? (opTasks.map(operationalTask).join(\"\") || '<div class=\"dim\">no operational assignments</div>') : '<div class=\"dim\">assignments, messages and debates could not be read — this is not a count of zero</div>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "operationalTask builder renderer.js:649-654 esc()s task_id/status/objective/owners and delegates to msgRow/debateRow (both esc-only); both ternary fallbacks are static literals (renderer.js:675-677)."
++    },
++    "legacyAvailable ? (model.tasks.map(taskCard).join(\"\") || '<div class=\"dim\">no tasks in shared memory</div>') : '<div class=\"dim\">the control-plane channel could not be read — this is not a count of zero</div>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "taskCard builder renderer.js:660-665 esc()s taskId/role and (since B2-4) contextRouted.count, and delegates to gateRow/artRow (esc-only); both ternary fallbacks are static literals (renderer.js:684-686)."
++    },
++    "r.approvable ? \"Reject\" : \"Dismiss\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:736 — ternary with string-literal branches only (button caption)."
++    },
++    "chips || '<span class=\"dim\">…</span>'": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "chips built at renderer.js:819-823 — every interpolation esc()d (state, subscriptionRef/provider, provider label, count label); the || fallback is a static literal (renderer.js:826)."
++    },
++    "warn": {
++      "class": "STATIC",
++      "reason": "warn built at renderer.js:824-825 — either a static markup literal or \"\"."
++    },
++    "greyed ? \" greyed\" : \"\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:875 — ternary with string-literal branches only (class fragment)."
++    },
++    "oidx": {
++      "class": "GUARANTEED-INTEGER",
++      "reason": "oidx is the array index from flat.map((o, i) => ...) captured in the idxOf Map (renderer.js:895, 900-901) — always a non-negative integer; rendered into a data- attribute at renderer.js:875."
++    },
++    "slug": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "slug built at renderer.js:874 — esc(o.model_slug), or the static literal <span class=\"pk-slug\">CLI default</span>, or \"\"."
++    },
++    "residencyChip(o)": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "residencyChip builder renderer.js:862-865 — esc(o.residency) in both attribute and text position, else \"\"."
++    },
++    "roleSel": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "roleSel built at renderer.js:869-870 — esc(r) for every option value and label; data-oidx carries the same integer index as #20; \"\" when greyed/conductorTarget."
++    },
++    "action": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "action built at renderer.js:871-873 — esc(o.unavailable_reason) in the title attribute; button captions are static literals; data-oidx is the integer index."
++    },
++    "auth.authorized ? \"ok\" : \"denied\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:896 — ternary with string-literal branches only (class-name switch)."
++    },
++    "auth.authorized ? \"live authorized\" : \"live DENIED (fail-closed)\"": {
++      "class": "STATIC",
++      "reason": "renderer.js:896 — ternary with string-literal branches only (status text)."
++    },
++    "target": {
++      "class": "ESCAPED-BY-CONSTRUCTION",
++      "reason": "target built at renderer.js:897 — either the static literal \"target: new pane\" or esc(pickerTarget)."
++    }
++  }
++}
+diff --git a/tools/release/innerhtml_sink_audit.py b/tools/release/innerhtml_sink_audit.py
+new file mode 100644
+index 0000000..4c44d8f
+--- /dev/null
++++ b/tools/release/innerhtml_sink_audit.py
+@@ -0,0 +1,397 @@
++#!/usr/bin/env python
++"""innerHTML sink audit scanner — SWS-REM-DIR-20260828 R2, B2-4 (M-3).
++
++Scope (explicit, no globs):
++
++1. Every ``.innerHTML =`` assignment in the audited file — the scanner walks
++   each right-hand expression (paren/bracket/brace/string/template aware, so
++   templates inside ``.map(...)`` callbacks count) and classifies every
++   ``${...}`` interpolation in every template it reaches.
++2. CONSTRUCTION SITES named in the ledger's ``construction_fragments`` —
++   templates that do not sit inside an innerHTML RHS but whose content is
++   later assigned to one (e.g. the ``interruptedNotice`` builder), and the
++   row-builder templates those sinks concatenate. A template is in scope iff
++   it contains one of the enumerated literal fragments.
++
++Classification of each interpolation:
++
++  ESCAPED       wrapped in esc(...)
++  GUARANTEED    pure numeric literal or ``.length`` (language-guaranteed int)
++  COMPOSITE     embeds nested template literals — leaf interpolations are
++                scanned in their own right
++  MUST-JUSTIFY  anything else: needs a ledger ``justifications`` entry naming
++                its class (STATIC / ESCAPED-BY-CONSTRUCTION) and the
++                byte-level reason it cannot inject markup
++
++Exit codes: 0 every interpolation safe or justified; 1 unjustified
++interpolations remain; 2 usage error. Stdlib-only.
++"""
++
++from __future__ import annotations
++
++import argparse
++import json
++import re
++import sys
++from datetime import datetime, timezone
++
++
++# ---------------------------------------------------------------- lexing ---
++
++def _skip_string(src: str, i: int, quote: str) -> int:
++    i += 1
++    n = len(src)
++    while i < n:
++        if src[i] == "\\":
++            i += 2
++            continue
++        if src[i] == quote:
++            return i + 1
++        i += 1
++    return i
++
++
++def _skip_regex(src: str, i: int) -> int:
++    i += 1
++    n = len(src)
++    in_class = False
++    while i < n:
++        c = src[i]
++        if c == "\\":
++            i += 2
++            continue
++        if c == "[":
++            in_class = True
++        elif c == "]":
++            in_class = False
++        elif c == "/" and not in_class:
++            i += 1
++            while i < n and src[i].isalpha():
++                i += 1
++            return i
++        elif c == "\n":
++            return i
++        i += 1
++    return i
++
++
++REGEX_PRECEDING = set("(,=:[!&|?{};+-*%<>~^")
++
++
++def _scan_template(src: str, i: int, collector: list) -> int:
++    start = i
++    i += 1
++    n = len(src)
++    while i < n:
++        c = src[i]
++        if c == "\\":
++            i += 2
++            continue
++        if c == "`":
++            collector.append((start, i, src[start:i + 1]))
++            return i + 1
++        if c == "$" and i + 1 < n and src[i + 1] == "{":
++            i = _skip_interp(src, i + 2, collector)
++            continue
++        i += 1
++    collector.append((start, n, src[start:n]))
++    return n
++
++
++def _skip_interp(src: str, i: int, collector: list) -> int:
++    depth = 1
++    n = len(src)
++    while i < n and depth:
++        c = src[i]
++        if c == "{":
++            depth += 1
++            i += 1
++            continue
++        if c == "}":
++            depth -= 1
++            i += 1
++            continue
++        if c in ("'", '"'):
++            i = _skip_string(src, i, c)
++            continue
++        if c == "`":
++            i = _scan_template(src, i, collector)
++            continue
++        if c == "/" and i + 1 < n and src[i + 1] == "/":
++            j = src.find("\n", i)
++            i = n if j < 0 else j
++            continue
++        i += 1
++    return i
++
++
++def _skip_comment_or_regex(src: str, i: int, last_significant: str):
++    """Returns new index, or None if no comment/regex starts here."""
++    c = src[i]
++    n = len(src)
++    if c == "/" and i + 1 < n and src[i + 1] == "/":
++        j = src.find("\n", i)
++        return n if j < 0 else j
++    if c == "/" and i + 1 < n and src[i + 1] == "*":
++        j = src.find("*/", i + 2)
++        return n if j < 0 else j + 2
++    if c == "/" and last_significant in REGEX_PRECEDING:
++        return _skip_regex(src, i)
++    return None
++
++
++def lex_templates(src: str) -> list:
++    """All template literals (nested included) as (start, end_incl, text)."""
++    templates = []
++    i, n = 0, len(src)
++    last_significant = ""
++    while i < n:
++        c = src[i]
++        if c == "'":
++            i = _skip_string(src, i, "'")
++            last_significant = "'"
++            continue
++        if c == '"':
++            i = _skip_string(src, i, '"')
++            last_significant = '"'
++            continue
++        if c == "`":
++            i = _scan_template(src, i, templates)
++            last_significant = "`"
++            continue
++        skip = _skip_comment_or_regex(src, i, last_significant)
++        if skip is not None:
++            i = skip
++            last_significant = "/"
++            continue
++        if not c.isspace():
++            last_significant = c
++        i += 1
++    return templates
++
++
++def top_level_interpolations(template_text: str) -> list:
++    assert template_text.startswith("`") and template_text.endswith("`")
++    body = template_text[1:-1]
++    out = []
++    i, n = 0, len(body)
++    while i < n:
++        if body[i] == "\\":
++            i += 2
++            continue
++        if body[i] == "$" and i + 1 < n and body[i + 1] == "{":
++            depth = 1
++            j = i + 2
++            while j < n and depth:
++                cj = body[j]
++                if cj == "\\":
++                    j += 2
++                    continue
++                if cj == "{":
++                    depth += 1
++                elif cj == "}":
++                    depth -= 1
++                elif cj in ("'", '"'):
++                    # quote inside the interpolation: skip its string
++                    k = j + 1
++                    while k < n:
++                        if body[k] == "\\":
++                            k += 2
++                            continue
++                        if body[k] == cj:
++                            break
++                        k += 1
++                    j = k
++                elif cj == "`":
++                    k = j + 1
++                    nd = 0
++                    while k < n:
++                        if body[k] == "\\":
++                            k += 2
++                            continue
++                        if body[k] == "`" and nd == 0:
++                            break
++                        if body[k] == "$" and k + 1 < n and body[k + 1] == "{" and nd == 0:
++                            nd += 1
++                            k += 2
++                            continue
++                        if nd and body[k] == "}":
++                            nd -= 1
++                        k += 1
++                    j = k
++                j += 1
++            out.append(body[i + 2:j - 1])
++            i = j
++            continue
++        i += 1
++    return out
++
++
++# ------------------------------------------------------------- classify ---
++
++NUM_RE = re.compile(r"^\d+(\.\d+)?$")
++
++
++def classify(expr: str) -> str:
++    e = " ".join(expr.split())
++    if "`" in e:
++        return "COMPOSITE"
++    if e.startswith("esc("):
++        return "ESCAPED"
++    if NUM_RE.match(e) or e.endswith(".length"):
++        return "GUARANTEED"
++    return "MUST-JUSTIFY"
++
++
++def line_of(src: str, pos: int) -> int:
++    return src.count("\n", 0, pos) + 1
++
++
++# ---------------------------------------------------------------- scope ---
++
++def innerhtml_rhs_templates(src: str, templates: list) -> set:
++    """Template indices reached by any `.innerHTML =` right-hand side."""
++    reached = set()
++    for m in re.finditer(r"\.innerHTML\s*=", src):
++        i = m.end()
++        n = len(src)
++        depth = 0
++        end = n
++        last_sig = "="
++        while i < n:
++            c = src[i]
++            if c in "([{":
++                depth += 1
++                i += 1
++                last_sig = c
++                continue
++            if c in ")]}":
++                depth -= 1
++                i += 1
++                last_sig = c
++                continue
++            if depth == 0 and c == ";":
++                end = i
++                break
++            if c in ("'", '"'):
++                i = _skip_string(src, i, c)
++                last_sig = c
++                continue
++            if c == "`":
++                # template on the RHS: find its lexed span
++                i = _scan_template(src, i, [])
++                last_sig = "`"
++                continue
++            skip = _skip_comment_or_regex(src, i, last_sig)
++            if skip is not None:
++                i = skip
++                last_sig = "/"
++                continue
++            if not c.isspace():
++                last_sig = c
++            i += 1
++        for idx, (start, _, _) in enumerate(templates):
++            if m.end() <= start < end:
++                reached.add(idx)
++    return reached
++
++
++def construction_templates(src: str, templates: list, fragments: list) -> set:
++    hit = set()
++    for idx, (_, _, text) in enumerate(templates):
++        if any(frag in text for frag in fragments):
++            hit.add(idx)
++    return hit
++
++
++# ----------------------------------------------------------------- scan ---
++
++def scan(src: str, ledger: dict) -> dict:
++    templates = lex_templates(src)
++    fragments = ledger.get("construction_fragments", [])
++    justifications = ledger.get("justifications", {})
++    scope = innerhtml_rhs_templates(src, templates) | \
++        construction_templates(src, templates, fragments)
++    # Scope closure: a template lexically nested inside an in-scope template
++    # is in scope too (its interpolations reach the same sink).
++    changed = True
++    while changed:
++        changed = False
++        for idx, (start, end, _) in enumerate(templates):
++            if idx in scope:
++                continue
++            for pidx in scope:
++                pstart, pend, _ = templates[pidx]
++                if pstart < start and end < pend:
++                    scope.add(idx)
++                    changed = True
++                    break
++
++    results = []
++    for idx in sorted(scope):
++        start, _, text = templates[idx]
++        base_line = line_of(src, start)
++        for expr in top_level_interpolations(text):
++            cls = classify(expr)
++            entry = {"line": base_line,
++                     "expr": " ".join(expr.split())[:200],
++                     "class": cls}
++            if cls == "MUST-JUSTIFY":
++                just = justifications.get(" ".join(expr.split()))
++                if just and just.get("class") and just.get("reason"):
++                    entry["class"] = just["class"]
++                    entry["justification"] = just["reason"]
++                else:
++                    entry["unjustified"] = True
++            results.append(entry)
++    return {
++        "gate": "innerhtml_sink_audit",
++        "directive": "SWS-REM-DIR-20260828 R2 / B2-4 (M-3)",
++        "utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
++        "templates_in_scope": len(scope),
++        "interpolations": results,
++    }
++
++
++def main(argv=None) -> int:
++    ap = argparse.ArgumentParser(description="innerHTML interpolation audit")
++    ap.add_argument("--file", required=True)
++    ap.add_argument("--ledger", required=True)
++    ap.add_argument("--json", action="store_true")
++    args = ap.parse_args(argv)
++
++    try:
++        with open(args.file, "r", encoding="utf-8") as f:
++            src = f.read()
++    except OSError as exc:
++        print(f"innerhtml_sink_audit: cannot read {args.file}: {exc}",
++              file=sys.stderr)
++        return 2
++    try:
++        with open(args.ledger, "r", encoding="utf-8") as f:
++            ledger = json.load(f)
++    except (OSError, ValueError) as exc:
++        print(f"innerhtml_sink_audit: cannot read ledger: {exc}",
++              file=sys.stderr)
++        return 2
++
++    report = scan(src, ledger)
++    bad = [r for r in report["interpolations"] if r.get("unjustified")]
++    report["verdict"] = "FAIL" if bad else "PASS"
++    report["unjustified_count"] = len(bad)
++    if args.json:
++        print(json.dumps(report, indent=2))
++    else:
++        counts = {}
++        for r in report["interpolations"]:
++            counts[r["class"]] = counts.get(r["class"], 0) + 1
++        print(f"innerhtml_sink_audit: {report['verdict']} "
++              f"(templates_in_scope={report['templates_in_scope']}, "
++              f"interpolations={len(report['interpolations'])} {counts})")
++        for r in bad:
++            print(f"  UNJUSTIFIED line ~{r['line']}: {r['expr']}")
++    return 1 if bad else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/tools/release/test_innerhtml_sink_audit.py b/tools/release/test_innerhtml_sink_audit.py
+new file mode 100644
+index 0000000..062fccc
+--- /dev/null
++++ b/tools/release/test_innerhtml_sink_audit.py
+@@ -0,0 +1,98 @@
++#!/usr/bin/env python
++"""Tests for innerhtml_sink_audit.py (SWS-REM-DIR-20260828 R2 B2-4)."""
++
++from __future__ import annotations
++
++import os
++import sys
++import unittest
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++sys.path.insert(0, HERE)
++import innerhtml_sink_audit as isa  # noqa: E402
++
++
++class ExtractTests(unittest.TestCase):
++    def test_finds_nested_templates(self):
++        src = "el.innerHTML = `a ${x ? `b ${y}` : `c`} d`;"
++        temps = isa.lex_templates(src)
++        texts = [t[2] for t in temps]
++        self.assertTrue(any("a ${" in t for t in texts))
++        self.assertTrue(any(t == "`b ${y}`" for t in texts), texts)
++        self.assertTrue(any(t == "`c`" for t in texts), texts)
++
++    def test_quotes_inside_regex_do_not_derail(self):
++        src = 'const e = (s) => String(s).replace(/[&<>"]/g, f); el.innerHTML = `${v}`;'
++        temps = isa.lex_templates(src)
++        self.assertEqual(len(temps), 1)
++        self.assertEqual(isa.top_level_interpolations(temps[0][2]), ["v"])
++
++    def test_string_with_backtick_not_template(self):
++        src = 'const s = "not `a` template"; el.innerHTML = `${v}`;'
++        temps = isa.lex_templates(src)
++        self.assertEqual(len(temps), 1)
++
++    def test_comment_with_backtick_ignored(self):
++        src = '// note `not a template`\nel.innerHTML = `${v}`;'
++        temps = isa.lex_templates(src)
++        self.assertEqual(len(temps), 1)
++
++
++class ClassifyTests(unittest.TestCase):
++    def test_esc_wrapped(self):
++        self.assertEqual(isa.classify("esc(x)"), "ESCAPED")
++        self.assertEqual(isa.classify("  esc(a || b) "), "ESCAPED")
++
++    def test_guaranteed(self):
++        self.assertEqual(isa.classify("3"), "GUARANTEED")
++        self.assertEqual(isa.classify("rows.length"), "GUARANTEED")
++
++    def test_composite(self):
++        self.assertEqual(isa.classify("a ? `x` : `y`"), "COMPOSITE")
++
++    def test_other_needs_justification(self):
++        self.assertEqual(isa.classify("op.summary.task_count"), "MUST-JUSTIFY")
++
++
++class ScanTests(unittest.TestCase):
++    def test_hazard_flagged_without_ledger(self):
++        src = "el.innerHTML = `${model.supplied}`;"
++        report = isa.scan(src, {})
++        bad = [r for r in report["interpolations"] if r.get("unjustified")]
++        self.assertEqual(len(bad), 1)
++        self.assertEqual(bad[0]["expr"], "model.supplied")
++
++    def test_ledger_entry_clears(self):
++        src = "el.innerHTML = `${model.supplied}`;"
++        ledger = {"justifications": {"model.supplied": {
++            "class": "STATIC", "reason": "unit fixture"}}}
++        report = isa.scan(src, ledger)
++        self.assertFalse(any(r.get("unjustified")
++                             for r in report["interpolations"]))
++
++    def test_nested_builder_template_reaches_scope(self):
++        # A builder's own nested template must be in scope through scope
++        # closure when its parent template is in scope (renderer.js case:
++        # taskCard is enumerated by fragment; its routed-count leaf is nested).
++        src = ("const card = (t) => `outer-FRAG ${t.contextRouted ? `inner "
++               "${t.contextRouted.count} entries` : `none`}`;\n"
++               "el.innerHTML = `${x}`;")
++        report = isa.scan(src, {"construction_fragments": ["outer-FRAG"]})
++        exprs = [r["expr"] for r in report["interpolations"]]
++        self.assertIn("t.contextRouted.count", exprs)
++        self.assertTrue(any(r.get("unjustified")
++                            and r["expr"] == "t.contextRouted.count"
++                            for r in report["interpolations"]))
++
++    def test_nested_leaf_scanned(self):
++        src = "el.innerHTML = `${ok ? `safe` : `bad ${raw.thing}`}`;"
++        report = isa.scan(src, {})
++        exprs = [r["expr"] for r in report["interpolations"]]
++        self.assertIn("raw.thing", exprs)
++        self.assertTrue(any(r.get("unjustified") and r["expr"] == "raw.thing"
++                            for r in report["interpolations"]))
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)
++
+-- 
+2.34.1
+

@@ -1,0 +1,40 @@
+# CODEX WORK DIRECTIVE — CONVERGE-01 · SWS-REM-DIR-20260828
+## The convergence loop: run everything buildable to exhaustion; exit only when the residue is adjudication and operator acts
+## Builder: codex · ENTRY 006 (log SHA-256 after recording: `8ff3331f58efb09230723cba14b8bd7c…`) · absorbs and supersedes the standalone Batch-5 paste
+
+**Operator:** paste between the markers into Codex, working directory `D:\producttion software 2\`, full file access. Long run — let it work.
+
+---BEGIN PASTE---
+
+You are the BUILDER seat `codex (local harness)`, executing CONVERGE-01 under SWS-REM-DIR-20260828 R2 + Annex A, authorized by OPERATOR-INSTRUCTIONS.log ENTRY 006. This is a run-to-convergence loop: you do not stop between items or phases; you park-and-continue per E-1..E-6; you exit only when every hermetic buildable item is CANDIDATE and the residual queue contains only reviewer/operator/deferred work. **Standing rules R-1..R-10 from `CODEX-BUILD-DIRECTIVE-BATCH4EXT-R2-20260828.md` §1 apply verbatim**, with ONE amendment from ENTRY 006: network access is granted for PUBLIC PACKAGE REGISTRIES ONLY (pypi, npm, Electron dist), installs confined to worktree environments — no billed APIs, no provider calls, no model downloads. CANDIDATE only; no reviewer PASS; no operator questions.
+
+BOOT: ENTRIES 001–006 present in the log; directive `9061c2e8…`; annex `acae8fb8…`; worktree HEAD `a945d997617b43251d600ef63ac459d2f72e01fb`, clean porcelain. Read Lane OP of `PUNCH-LIST-V3-20260828.md` and the Batch-5 directive `CODEX-BUILD-DIRECTIVE-BATCH5-20260828.md` (its queue is your C1, its item specs govern C1 verbatim). Mismatch → BOOT-FAILURE.md, stop.
+
+## PHASE C1 — Batch-5 queue (specs verbatim from the Batch-5 directive)
+1. N-13b optional-adapter skip + EXECUTE the rebase. 2. OP-3 terminal cap → minimum 8. 3. OP-4 Token Center embedded live (scoped CSP/frame-ancestors exactly as specified). 4. OP-1 `install_shortcut.ps1` + local icon. 5. OP-2 FRONTIER-PROVIDER-DOSSIER (bundle only, no code). One commit per item, bundles under `bundles\CONVERGE01\C1-<id>\`.
+
+## PHASE C2 — environment provisioning (the E-3 prerequisite everything else has waited on)
+Provision, inside the worktree only, from the RETAINED LOCKS (R-3: read each module's lock/requirements before installing; locks are the authority, never "latest"): SOVEREIGN venv (`modules/sovereign/.venv` from its WORKSPACE-RESOLVED-LOCK), Debate venv (its requirements.lock), SOW Python env (its lock — this finally supplies jsonschema and unblocks the full pytest suite and the parked T2 leg), Distillery venv (its lock), Token Center (stdlib — verify, no install), any missing node deps per committed package-locks (`npm ci`, never `npm install`). Per environment: record installer output, `pip freeze`/`npm ls` snapshot, and a hash manifest of installed-package versions vs the lock — any resolution that DIFFERS from the lock is parked as a dossier, not silently accepted. Environments are gitignored (verify; extend .gitignore only if a path escapes it — R-4). Evidence: `bundles\CONVERGE01\C2\`. Then run each module's smoke import/self-check that needs only its venv (no services, no models). Commit (ignore-file/docs changes only; environments stay untracked).
+
+## PHASE C3 — release identity
+1. LICENSE: add `LICENSE` at worktree root and per-module `LICENSE` files, text exactly: `Copyright (c) 2026 Samuel Lawson / Dark Science Division. All rights reserved.` plus one line: `Interim license record; canonical license text to be supplied by the operator before external distribution.` (ENTRY 006 default; operator supersedes later.)
+2. System version: create `VERSION.json` at root — `{"system":"sovereign-workspace","version":"1.0.0-rc.1","source_commit":"<final C-commit, filled at C6>","modules":{...per-module versions from RELEASE-MANIFEST...}}`. rc.1 because ratification has not occurred — the plain 1.0.0 identity is minted at promotion, not by you.
+3. SBOM: generate `SBOM.json` (CycloneDX-style or a documented equivalent you construct from lock data — R-3, no invented tool flags; offline from the locks + C2 snapshots + native-binary inventory with SHA-256 for Electron/node-pty/any .exe/.node/.pyd in the tree).
+4. Module release archives: for each of shell, sovereign, debate, sow, distillery, tokencenter — `git archive` of that module's path at HEAD into `release-artifacts/<module>-<version>-src.zip` + `.sha256` sidecar + annotated tag `rel/<module>/<version>` in the worktree repo. Debate: confirm its pin matches the existing d03ba417 release identity in the notes rather than re-cutting its upstream artifact. NOTE in bundle: upstream-repo W-4 tagging (Distillery 1.1.0 in its own repo) is outside the write boundary — residual for the operator; these worktree objects are the composed-product release set.
+5. Commit (LICENSE, VERSION.json, SBOM, tags; `release-artifacts/` gitignored, hashed in the manifest at C6).
+
+## PHASE C4 — clean-room install path
+Build four entry points under `tools/release/`: `build_release.ps1` (produces the artifact set from a clean `git archive`), `install.ps1 -Dest <dir>` (extracts, writes `shell/config/install.json` for the destination, runs the adapter rebase, creates shortcuts via `install_shortcut.ps1 -TargetDir`, provisions venvs from locks), `verify_install.ps1 -Dest` (hash-verifies against the manifest, runs the package-boundary gate and each module's import smoke), `uninstall.ps1 -Dest` (removes the installation, proves nothing outside `-Dest` was touched). TEST the full cycle into `D:\producttion software 2\install test area\` (spaces in path, empty start): build → install → verify → uninstall, all captured. The installed copy must start its shell from the documented launcher only — verify the shell boots and serves `/` from the installed location (loopback GET, then clean stop; this is a hermetic self-host check, not a live-acceptance leg). Commit tooling; the test area is cleaned up after evidence capture.
+
+## PHASE C5 — full deterministic program at final bytes
+After the LAST code/tooling commit: run EVERY suite with measured counts — SOW full pytest (now provisioned; compare to the 2382/0/1 host-coupled contract and record the measured truth), SOW desktop `node --test`, terminal suite, shell suite (R-5 restoration), tokencenter, distillery, debate, sovereign self-test IF runnable hermetically from its venv without models (park with cause if it requires Ollama models loaded — E-6), all release-tool tests, all gates. Zero unexplained warnings/orphans or park-with-dossier. Any failure traced to your C1–C4 changes is fixed within scope and C5 re-runs from the top (deterministic results bind to final bytes only).
+
+## PHASE C6 — seal
+Regenerate provenance + RELEASE-MANIFEST (now also enumerating LICENSE/VERSION/SBOM/release-artifacts hashes) — manifests-last rule. Fill VERSION.json's source_commit. Re-cut the two candidate ZIPs from `git archive` of the final commit into `release-artifacts/` (+ sidecars), cold-extract each to a temp area and hash-verify. Build `REVIEW-PACKAGE-CONVERGE01.zip` (patches since `a945d99`, all CONVERGE01 bundles minus >5MB files, custody docs) + sidecar. Write `bundles\CONVERGE01\RELEASE-NOTES-DRAFT.md`: versions, changes since baseline, EVERY accepted limitation and park by name (Grok-registry/G28 no-spend, Distillery status-only + deferred live testing + deferred UI (OP-6), H-5 awaiting OD-20, MT-09, G26, live-acceptance legs, OP-2 awaiting rulings, upstream W-4, canonical license text pending). Write `bundles\CONVERGE01\CONVERGE-REPORT.md`: full commit chain, per-phase results, measured totals, and the RESIDUAL QUEUE — which must contain ONLY reviewer verdicts, operator physical acts/rulings, and operator-deferred items. If anything buildable-hermetic remains, you are not converged: loop back and build it. Final commit. Append CONVERGE-01 to `bundles\LOOP-RUN-REPORT.md`.
+
+Exit condition = the convergence definition in ENTRY 006. End every report with:
+`BUILDER CLAIM: no gate submitted for reviewer evaluation; no PASS asserted.`
+
+Execute BOOT now. Run C1→C6 to convergence, then stop.
+
+---END PASTE---

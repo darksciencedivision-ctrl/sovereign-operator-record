@@ -1,0 +1,27 @@
+From 1c023c99033b6c042ef82df9b85dffe21d91ba47 Mon Sep 17 00:00:00 2001
+From: "builder grok-4.6 (opencode harness, SWS-REM-DIR-20260828)"
+ <builder.grok@sws-rem-dir-20260828.local>
+Date: Fri, 28 Aug 2026 00:05:33 -0500
+Subject: [PATCH 18/20] B3-6 (L-3): worktree README Debate version
+ v1.2.1-hardening from RELEASE-MANIFEST
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/README.md b/README.md
+index 3ea8e1f..66579b5 100644
+--- a/README.md
++++ b/README.md
+@@ -73,7 +73,7 @@ result and exits. It is a proof hook, not a feature, and adds no HTTP endpoint.
+ | Module | Port | Type |
+ |---|---|---|
+ | SOVEREIGN 3.1.2 | 5175 | Flask web app |
+-| Debate Table v1.2 P1 | 8700 | FastAPI web app |
++| Debate Table v1.2.1-hardening | 8700 | FastAPI web app |
+ | Multi-Model Terminal (SOW) | — | Electron desktop app |
+ | Sovereign Distillery | — | File-driven status only |
+ 
+-- 
+2.34.1
+
